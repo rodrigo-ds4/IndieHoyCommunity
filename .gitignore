@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+
+# Docker
+*.pid
+*.log
+
+# VSCode / IDEs
+.vscode/
+.idea/
+
+# MacOS
+.DS_Store
+
+# Python dotenv
+*.env
+
+# Ollama model cache
+/root/.ollama/
