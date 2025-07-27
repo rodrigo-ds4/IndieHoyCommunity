@@ -5,7 +5,7 @@ Aggregates all endpoint routers
 
 from fastapi import APIRouter
 
-from app.api.endpoints import chat, discounts, health, supervision, admin
+from app.api.endpoints import chat, discounts, health, supervision, admin, shows, users
 
 # Main API router
 api_router = APIRouter()
@@ -39,4 +39,16 @@ api_router.include_router(
     admin.router, 
     prefix="/admin", 
     tags=["admin"]
+)
+
+api_router.include_router(
+    shows.router, 
+    prefix="/shows", 
+    tags=["shows"]
+)
+
+api_router.include_router(
+    users.router, 
+    prefix="/users", 
+    tags=["users"]
 ) 

@@ -89,6 +89,11 @@ def create_sample_data():
             ("ROCK018", "La Renga", "Estadio Kempes", "Córdoba", "rock", 5500, "Ticketek Córdoba - Código: KEMPES20"),
             ("POP019", "Abel Pintos", "Quality Espacio", "Córdoba", "pop", 6800, "Mail a info@quality.com.ar con ABEL15"),
             ("JAZZ020", "Peteco Carabajal", "Teatro del Libertador", "Córdoba", "jazz", 3200, "Reservas: libertador@teatros.cba.gov.ar - PETECO10"),
+            
+            # 🚨 SHOWS SOLD OUT PARA TESTING (max_discounts = 0)
+            ("SOLD001", "Abel Pintos Sold Out", "Teatro Colón", "Buenos Aires", "pop", 15000, "Contactar Teatro Colón con código SOLD001"),
+            ("SOLD002", "Charly García Completo", "Luna Park", "Buenos Aires", "rock", 12000, "Show completo - sin descuentos disponibles"),
+            
             ("FOLK021", "Los Nocheros", "Teatro Real", "Córdoba", "folklore", 4800, "Código en boletería: REAL25"),
             ("INDIE022", "Conociendo Rusia", "Sala Siranush", "Córdoba", "indie", 2800, "Presentar código: SIRANUSH20"),
             ("ELEC023", "John Talabot", "Club Atlético Belgrano", "Córdoba", "electronic", 3500, "Mail a eventos@belgrano.com con TALABOT15"),
@@ -126,13 +131,20 @@ def create_sample_data():
         shows = []
         for code, title, venue, city, genre, price, discount_info in shows_data:
             show_date = datetime.now() + timedelta(days=random.randint(1, 90))
+            
+            # 🚨 SHOWS SOLD OUT - max_discounts = 0
+            if "SOLD" in code:
+                max_discounts = 0
+            else:
+                max_discounts = random.randint(5, 25)
+            
             show = Show(
                 code=code,
                 title=title,
                 artist=title.split()[0] if " " in title else title,
                 venue=venue,
                 show_date=show_date,
-                max_discounts=random.randint(5, 25),
+                max_discounts=max_discounts,
                 ticketing_link=f"https://ticketek.com.ar/{code.lower()}",
                 other_data={
                     "genre": genre,

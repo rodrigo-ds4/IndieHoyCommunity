@@ -548,16 +548,29 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
         🚨 PASO 2A.5: VALIDACIONES FAIL-FAST ANTES DEL LLM
         Verifica condiciones críticas que garantizan rechazo inmediato
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         user_data = context.get('user_data')
         matching_shows = context.get('matching_shows', [])
         best_match = matching_shows[0] if matching_shows else None
         history = context.get('user_history', {})
+        
+        # 🔍 DEBUGGING: Log de datos que llegan a fail-fast
+        logger.warning(f"\n🔍 FAIL-FAST DEBUG:")
+        logger.warning(f"user_data: {user_data}")
+        logger.warning(f"matching_shows count: {len(matching_shows)}")
+        if best_match:
+            logger.warning(f"best_match: {best_match}")
+            logger.warning(f"remaining_discounts: {best_match.get('remaining_discounts', 'NOT_FOUND')}")
+            logger.warning(f"monthly_fee_current: {user_data.get('monthly_fee_current', 'NOT_FOUND') if user_data else 'NO_USER_DATA'}")
         
         # 🔒 CRITICAL FAIL CONDITIONS - Verificación previa al LLM
         fail_fast_checks = []
         
         # 1. Usuario no existe
         if not user_data:
+            logger.warning("🚨 FAIL-FAST: Usuario no existe - REJECTING")
             return {
                 "fail_fast": True,
                 "decision": "rejected",
@@ -569,6 +582,7 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
         
         # 2. Suscripción inactiva
         if not user_data.get('subscription_active'):
+            logger.warning("🚨 FAIL-FAST: Suscripción inactiva - REJECTING")
             return {
                 "fail_fast": True, 
                 "decision": "rejected",
@@ -579,7 +593,10 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
             }
         
         # 3. 🚨 CRÍTICO: Cuotas atrasadas - Este era el error en TEST 4
-        if not user_data.get('monthly_fee_current'):
+        monthly_fee_current = user_data.get('monthly_fee_current')
+        logger.warning(f"🔍 Checking monthly_fee_current: {monthly_fee_current}")
+        if not monthly_fee_current:
+            logger.warning("🚨 FAIL-FAST: Cuotas atrasadas - REJECTING")
             return {
                 "fail_fast": True,
                 "decision": "rejected", 
@@ -591,6 +608,7 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
         
         # 4. No se encontró show con suficiente similitud
         if not best_match or best_match.get('similarity_score', 0) < 0.8:
+            logger.warning(f"🚨 FAIL-FAST: Show no encontrado - similarity: {best_match.get('similarity_score', 0) if best_match else 'NO_MATCH'}")
             return {
                 "fail_fast": True,
                 "decision": "rejected",
@@ -601,7 +619,10 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
             }
         
         # 5. 🚨 CRÍTICO: Sin descuentos disponibles - Este era el error en TEST 8  
-        if best_match.get('remaining_discounts', 0) <= 0:
+        remaining_discounts = best_match.get('remaining_discounts', 0)
+        logger.warning(f"🔍 Checking remaining_discounts: {remaining_discounts}")
+        if remaining_discounts <= 0:
+            logger.warning("🚨 FAIL-FAST: Sin descuentos disponibles - REJECTING")
             return {
                 "fail_fast": True,
                 "decision": "rejected",
@@ -613,6 +634,7 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
         
         # 6. Solicitud duplicada
         if history.get('has_previous_request') and history.get('previous_approved'):
+            logger.warning("🚨 FAIL-FAST: Solicitud duplicada - REJECTING")
             return {
                 "fail_fast": True,
                 "decision": "rejected",
@@ -623,6 +645,7 @@ VALIDACIÓN: ✅ PASS - fecha válida"""
             }
         
         # Si todas las validaciones críticas pasan, continuar con LLM
+        logger.warning("✅ FAIL-FAST: Todas las validaciones pasaron - continuando con LLM")
         return {
             "fail_fast": False,
             "message": "Todas las validaciones críticas pasaron - continuando con análisis del LLM"

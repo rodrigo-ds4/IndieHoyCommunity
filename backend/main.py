@@ -5,6 +5,7 @@ Main application setup and configuration
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
@@ -59,15 +60,15 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
+# Mount static files for supervision dashboard
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
-    return {
-        "message": "🤠 Charro Bot API is running!",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
+    """Redirect to discount request form"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/request")
 
 
 @app.get("/health")
@@ -76,4 +77,18 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "charro-bot-api"
-    } 
+    }
+
+
+@app.get("/supervision")
+async def supervision_dashboard():
+    """Serve supervision dashboard"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/supervision.html")
+
+
+@app.get("/request")
+async def request_discount_form():
+    """Serve discount request form"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/request-discount.html") 

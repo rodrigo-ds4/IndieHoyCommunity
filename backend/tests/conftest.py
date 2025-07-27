@@ -6,7 +6,7 @@ import asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.database import Base, User, Show
-from app.services.langchain_agent_service import LangChainAgentService
+# from app.services.langchain_agent_service import LangChainAgentService  # OLD - using new architecture
 from app.core.database import get_db
 from datetime import datetime, timedelta
 import random
@@ -36,8 +36,9 @@ def test_db():
 
 @pytest.fixture(scope="function")
 def agent_service(test_db):
-    """Create LangChain agent service with test database"""
-    return LangChainAgentService(test_db)
+    """Create new DiscountDecisionService with test database"""
+    from app.services.discount_decision_service import DiscountDecisionService
+    return DiscountDecisionService(test_db)
 
 
 @pytest.fixture(scope="function")

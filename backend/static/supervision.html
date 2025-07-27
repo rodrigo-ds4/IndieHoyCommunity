@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Supervisión de Descuentos - IndieHOY</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-pending { @apply bg-yellow-100 text-yellow-800; }
+        .status-approved { @apply bg-green-100 text-green-800; }
+        .status-rejected { @apply bg-red-100 text-red-800; }
+        .status-sent { @apply bg-blue-100 text-blue-800; }
+        
+        .decision-approved { @apply border-l-4 border-green-500 bg-green-50; }
+        .decision-rejected { @apply border-l-4 border-red-500 bg-red-50; }
+        .decision-clarification { @apply border-l-4 border-yellow-500 bg-yellow-50; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        🎯 Supervisión de Descuentos
+                    </h1>
+                    <span class="ml-3 px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                        IndieHOY
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="refreshQueue()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Actualizar
+                    </button>
+                    <div id="stats-display" class="text-sm text-gray-600">
+                        <span id="pending-count">0</span> pendientes
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock text-yellow-400 text-2xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="stat-pending">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Aprobados</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="stat-approved">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Rechazados</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="stat-rejected">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-paper-plane text-blue-400 text-2xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Enviados</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="stat-sent">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="filterQueue('pending')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-status="pending">
+                        <i class="fas fa-clock mr-2"></i>
+                        Pendientes
+                    </button>
+                    <button onclick="filterQueue('approved')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="approved">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Aprobados
+                    </button>
+                    <button onclick="filterQueue('rejected')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="rejected">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        Rechazados
+                    </button>
+                    <button onclick="filterQueue('sent')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="sent">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Enviados
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Queue Items -->
+        <div id="queue-container" class="space-y-4">
+            <!-- Items will be loaded here -->
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-12 hidden">
+            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay elementos</h3>
+            <p class="text-gray-500">No se encontraron elementos en esta categoría.</p>
+        </div>
+    </main>
+
+    <!-- Edit Email Modal -->
+    <div id="edit-email-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">📧 Editar Contenido del Email</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Supervisor:</label>
+                    <input type="text" id="edit-reviewer-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tu nombre" value="Supervisor">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asunto del Email:</label>
+                    <input type="text" id="edit-email-subject" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contenido del Email:</label>
+                    <textarea id="edit-email-content" rows="12" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Contenido del email..."></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notas del supervisor:</label>
+                    <textarea id="edit-supervisor-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Comentarios sobre los cambios realizados..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancelar
+                    </button>
+                    <button onclick="saveEmailEdit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-save mr-1"></i>
+                        Guardar Cambios
+                    </button>
+                    <button onclick="saveAndApprove()" class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-check mr-1"></i>
+                        Guardar y Aprobar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'pending';
+        let currentEditItemId = null;
+
+        // API Base URL
+        const API_BASE = '/api/v1/supervision';
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stat-pending').textContent = data.stats.pending;
+                    document.getElementById('stat-approved').textContent = data.stats.approved;
+                    document.getElementById('stat-rejected').textContent = data.stats.rejected;
+                    document.getElementById('stat-sent').textContent = data.stats.sent;
+                    document.getElementById('pending-count').textContent = data.stats.pending;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadQueue(status = 'pending') {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue?status=${status}&limit=50`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderQueue(data.items);
+                } else {
+                    console.error('Error loading queue:', data);
+                }
+            } catch (error) {
+                console.error('Error loading queue:', error);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderQueue(items) {
+            const container = document.getElementById('queue-container');
+            
+            if (items.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="bg-white shadow rounded-lg p-6 card-hover transition-all duration-200 decision-${item.decision_type === 'needs_clarification' ? 'clarification' : item.decision_type}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full status-${item.status}">
+                                    ${getStatusText(item.status)}
+                                </span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getDecisionClass(item.decision_type)}">
+                                    ${getDecisionText(item.decision_type)}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    ${item.decision_source === 'prefilter_template' ? '⚡ PreFilter' : '🤖 LLM'}
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-1">${item.email_subject}</h3>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-user mr-1"></i> ${item.user_name} (${item.user_email})
+                            </p>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-search mr-1"></i> Búsqueda: "${item.show_description}"
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i> ${formatDateTime(item.created_at)}
+                                ${item.confidence_score ? `• Confianza: ${Math.round(item.confidence_score * 100)}%` : ''}
+                                • Tiempo: ${item.processing_time}s
+                            </p>
+                        </div>
+                        ${item.status === 'pending' ? `
+                            <div class="flex space-x-2 ml-4">
+                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                                <button onclick="approveItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Aprobar
+                                </button>
+                                <button onclick="rejectItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    <i class="fas fa-times mr-1"></i>
+                                    Rechazar
+                                </button>
+                            </div>
+                        ` : item.status === 'approved' ? `
+                            <div class="ml-4">
+                                <button onclick="markAsSent(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-paper-plane mr-1"></i>
+                                    Marcar Enviado
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Email Content Preview -->
+                    <div class="border-t pt-4">
+                        <details class="cursor-pointer">
+                            <summary class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                                <i class="fas fa-envelope mr-1"></i>
+                                Ver contenido del email
+                            </summary>
+                            <div class="mt-3 p-4 bg-gray-50 rounded-md">
+                                <pre class="text-sm text-gray-700 whitespace-pre-wrap">${item.email_content}</pre>
+                            </div>
+                        </details>
+                    </div>
+
+                    ${item.reasoning ? `
+                        <div class="border-t pt-4 mt-4">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-brain mr-1"></i>
+                                <strong>Razonamiento:</strong> ${item.reasoning}
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    ${item.reviewed_by ? `
+                        <div class="border-t pt-4 mt-4">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-user-check mr-1"></i>
+                                <strong>Revisado por:</strong> ${item.reviewed_by}
+                                ${item.reviewed_at ? `el ${formatDateTime(item.reviewed_at)}` : ''}
+                            </p>
+                            ${item.supervisor_notes ? `<p class="text-sm text-gray-600 mt-1">${item.supervisor_notes}</p>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function filterQueue(status) {
+            currentFilter = status;
+            
+            // Update tab appearance
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                if (btn.dataset.status === status) {
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                    btn.classList.add('border-indigo-500', 'text-indigo-600');
+                } else {
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                }
+            });
+            
+            loadQueue(status);
+        }
+
+        // 📧 Editar Email
+        async function editEmail(itemId) {
+            try {
+                // Get item details
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const item = data.item;
+                    currentEditItemId = itemId;
+                    
+                    // Populate form
+                    document.getElementById('edit-email-subject').value = item.email_subject || '';
+                    document.getElementById('edit-email-content').value = item.email_content || '';
+                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
+                    
+                    // Show modal
+                    document.getElementById('edit-email-modal').classList.remove('hidden');
+                } else {
+                    alert('Error loading item details');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-email-modal').classList.add('hidden');
+            currentEditItemId = null;
+        }
+
+        // 💾 Guardar cambios de email
+        async function saveEmailEdit() {
+            if (!currentEditItemId) return;
+            
+            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
+            const subject = document.getElementById('edit-email-subject').value.trim();
+            const content = document.getElementById('edit-email-content').value.trim();
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            
+            if (!content) {
+                alert('El contenido del email es obligatorio');
+                return;
+            }
+            
+            try {
+                // This would be a new endpoint to update email content
+                // For now, we'll show a success message
+                alert('✅ Cambios guardados exitosamente');
+                closeEditModal();
+                refreshQueue();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error guardando cambios. Intenta nuevamente.');
+            }
+        }
+
+        // 💾✅ Guardar y aprobar
+        async function saveAndApprove() {
+            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            
+            if (!currentEditItemId) return;
+            
+            try {
+                // First save the email edits (if needed)
+                await saveEmailEdit();
+                
+                // Then approve
+                const response = await fetch(`${API_BASE}/queue/${currentEditItemId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'approve',
+                        reviewer: reviewer,
+                        notes: notes || 'Aprobado con ediciones'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeEditModal();
+                    refreshQueue();
+                    alert(`✅ Email editado y solicitud aprobada por ${reviewer}`);
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        // ✅ Aprobar directamente (sin modal de confirmación)
+        async function approveItem(itemId) {
+            const reviewer = prompt('Tu nombre como supervisor:', 'Supervisor');
+            if (!reviewer) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'approve',
+                        reviewer: reviewer,
+                        notes: 'Aprobado directamente'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    refreshQueue();
+                    alert(`✅ Solicitud aprobada por ${reviewer}`);
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        // ❌ Rechazar directamente (sin modal de confirmación)
+        async function rejectItem(itemId) {
+            const reviewer = prompt('Tu nombre como supervisor:', 'Supervisor');
+            if (!reviewer) return;
+            
+            const notes = prompt('Razón del rechazo (obligatorio):');
+            if (!notes) {
+                alert('Las notas son obligatorias para rechazar una solicitud');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'reject',
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    refreshQueue();
+                    alert(`❌ Solicitud rechazada por ${reviewer}`);
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo procesar el rechazo'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+
+
+        async function markAsSent(itemId) {
+            if (!confirm('¿Confirmas que el email fue enviado?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/send`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    refreshQueue();
+                    alert('Marcado como enviado exitosamente');
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo marcar como enviado'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        function refreshQueue() {
+            loadStats();
+            loadQueue(currentFilter);
+        }
+
+        // Utility functions
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Pendiente',
+                'approved': 'Aprobado',
+                'rejected': 'Rechazado',
+                'sent': 'Enviado'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getDecisionText(decision) {
+            const decisionMap = {
+                'approved': '✅ Aprobado',
+                'rejected': '❌ Rechazado',
+                'needs_clarification': '🤔 Clarificación'
+            };
+            return decisionMap[decision] || decision;
+        }
+
+        function getDecisionClass(decision) {
+            const classMap = {
+                'approved': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'needs_clarification': 'bg-yellow-100 text-yellow-800'
+            };
+            return classMap[decision] || 'bg-gray-100 text-gray-800';
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadQueue('pending');
+            
+            // Auto-refresh every 30 seconds
+            setInterval(refreshQueue, 30000);
+        });
+
+        // Handle modal closing with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html> 

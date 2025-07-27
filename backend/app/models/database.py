@@ -66,6 +66,7 @@ class Show(Base):
     
     # Relationships
     discount_requests = relationship("DiscountRequest", back_populates="show")
+    supervision_items = relationship("SupervisionQueue", back_populates="show")
     
     # Method to calculate remaining discounts
     def get_remaining_discounts(self, db_session):
@@ -103,7 +104,62 @@ class DiscountRequest(Base):
     show = relationship("Show", back_populates="discount_requests")
 
 
-
+class SupervisionQueue(Base):
+    __tablename__ = "supervision_queue"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    request_id = Column(String, unique=True, nullable=False)
+    user_email = Column(String, nullable=False)
+    user_name = Column(String, nullable=False)
+    show_description = Column(String, nullable=False)
+    
+    # Decision info
+    decision_type = Column(String, nullable=False)  # "approved", "rejected", "needs_clarification"
+    decision_source = Column(String, nullable=False)  # "prefilter_template" or "llm_generated"
+    show_id = Column(Integer, ForeignKey("shows.id"), nullable=True)
+    
+    # Email content
+    email_subject = Column(String, nullable=False)
+    email_content = Column(Text, nullable=False)
+    
+    # Processing info
+    confidence_score = Column(Float, nullable=True)
+    reasoning = Column(Text, nullable=True)
+    processing_time = Column(Float, nullable=False)
+    
+    # Supervision status
+    status = Column(String, default="pending")  # "pending", "approved", "rejected", "sent"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by = Column(String, nullable=True)
+    supervisor_notes = Column(Text, nullable=True)
+    
+    # Relations
+    show = relationship("Show", back_populates="supervision_items")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "request_id": self.request_id,
+            "user_email": self.user_email,
+            "user_name": self.user_name,
+            "show_description": self.show_description,
+            "decision_type": self.decision_type,
+            "decision_source": self.decision_source,
+            "show_id": self.show_id,
+            "email_subject": self.email_subject,
+            "email_content": self.email_content,
+            "confidence_score": self.confidence_score,
+            "reasoning": self.reasoning,
+            "processing_time": self.processing_time,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
+            "reviewed_by": self.reviewed_by,
+            "supervisor_notes": self.supervisor_notes,
+            "show_title": self.show.title if self.show else None,
+            "show_artist": self.show.artist if self.show else None
+        }
 
 
 class PaymentHistory(Base):

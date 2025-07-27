@@ -3,7 +3,7 @@ Test suite for LLM discount decision system
 20 comprehensive test cases including edge cases, confusing names, and complex scenarios
 """
 import pytest
-from app.services.langchain_agent_service import LangChainAgentService
+# from app.services.langchain_agent_service import LangChainAgentService  # OLD - using new architecture
 
 
 class TestLLMDiscountDecisions:
@@ -145,6 +145,25 @@ class TestLLMDiscountDecisions:
     @pytest.mark.asyncio
     async def test_08_sold_out_show(self, agent_service, complex_test_users, complex_test_shows):
         """Test 8: Show sin descuentos disponibles (sold out)"""
+        
+        # DEBUG: Verificar shows en DB antes del test
+        from app.models.database import Show
+        from app.services.discount_prefilter import DiscountPreFilter
+        
+        test_db = agent_service.db
+        abel_shows = test_db.query(Show).filter(Show.title.like('%Abel%')).all()
+        print(f"\n🔍 DEBUG: Shows con 'Abel' en DB: {len(abel_shows)}")
+        for show in abel_shows:
+            remaining = show.get_remaining_discounts(test_db)
+            print(f"  - {show.title} | Max: {show.max_discounts} | Remaining: {remaining}")
+        
+        # DEBUG: Test PreFilter directo
+        prefilter = DiscountPreFilter(test_db)
+        candidate_shows = prefilter._find_shows_with_discounts("Abel Pintos Sold Out")
+        print(f"\n🔍 DEBUG: Candidate shows: {len(candidate_shows)}")
+        for show in candidate_shows:
+            print(f"  - {show['title']} | Remaining: {show['remaining_discounts']}")
+        
         request_data = {
             "request_id": 8,
             "user_name": "Sebastian Valido",
@@ -153,6 +172,9 @@ class TestLLMDiscountDecisions:
         }
         
         result = await agent_service.process_discount_request(request_data)
+        
+        print(f"\n🔍 DEBUG: Final result: {result['decision']}")
+        print(f"🔍 DEBUG: Reasoning: {result.get('reasoning', 'N/A')}")
         
         assert result["success"] == True  
         assert result["decision"] == "rejected"

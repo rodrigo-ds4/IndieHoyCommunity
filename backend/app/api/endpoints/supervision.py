@@ -1,279 +1,177 @@
 """
-Supervision Endpoints (Updated for LangChain Agent)
-Human oversight with enhanced agent information
+Supervision Queue Endpoints
+FastAPI endpoints for human supervision of discount decisions
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from app.services.supervision_service import SupervisionService
-from app.services.discount_service import DiscountService
 from app.core.database import get_db
-from sqlalchemy.orm import Session
+from app.services.supervision_queue_service import SupervisionQueueService
 
 router = APIRouter()
 
-# Dependencies
-def get_supervision_service(db: Session = Depends(get_db)) -> SupervisionService:
-    return SupervisionService(db)
-
-def get_discount_service(db: Session = Depends(get_db)) -> DiscountService:
-    return DiscountService(db)
-
-
-class EmailUpdateRequest(BaseModel):
-    """Request model for updating email drafts"""
-    email_content: str
-    reviewer_name: str
+class SupervisionAction(BaseModel):
+    action: str  # "approve" or "reject"
+    reviewer: str
     notes: Optional[str] = None
 
-
-class ApprovalRequest(BaseModel):
-    """Request model for final approval"""
-    reviewer_name: str
-    final_notes: Optional[str] = None
-
-
-class RejectionRequest(BaseModel):
-    """Request model for rejecting requests"""
-    reviewer_name: str
-    rejection_reason: str
-
-
-@router.get("/dashboard")
-async def get_supervision_dashboard(
-    supervision_service: SupervisionService = Depends(get_supervision_service),
-    discount_service: DiscountService = Depends(get_discount_service)
-):
-    """
-    Enhanced supervision dashboard with LangChain agent metrics
-    """
-    try:
-        # Get traditional supervision stats
-        supervision_stats = await supervision_service.get_supervision_stats()
-        
-        # Get agent performance stats
-        agent_stats = await discount_service.get_agent_stats()
-        
-        # Get recent requests
-        pending_reviews = await supervision_service.get_pending_reviews(limit=20)
-        
-        return {
-            "supervision_stats": supervision_stats,
-            "agent_performance": agent_stats,
-            "recent_requests": pending_reviews,
-            "dashboard_title": "🔍 Supervisión de Descuentos - Charro Bot (LangChain Agent)",
-            "system_info": {
-                "agent_enabled": True,
-                "model": "llama3",
-                "processing_mode": "langchain_agent"
-            }
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/pending")
-async def get_pending_requests(
+@router.get("/queue")
+async def get_supervision_queue(
     limit: int = Query(50, ge=1, le=100),
-    status: Optional[str] = Query(None),
-    supervision_service: SupervisionService = Depends(get_supervision_service)
-):
-    """Get pending requests with agent decision details"""
-    try:
-        requests = await supervision_service.get_pending_reviews(
-            limit=limit,
-            status_filter=status
-        )
-        
-        # Enhance with agent information
-        enhanced_requests = []
-        for req in requests:
-            enhanced_req = req.copy()
-            # Add agent-specific fields
-            enhanced_req["agent_processed"] = req.get("validation_checks", {}).get("processed_by") == "langchain_agent"
-            enhanced_req["agent_confidence"] = req.get("confidence_score", 0) * 100 if req.get("confidence_score") else 0
-            enhanced_requests.append(enhanced_req)
-        
-        return {
-            "requests": enhanced_requests,
-            "count": len(enhanced_requests),
-            "filters_applied": {"status": status, "limit": limit},
-            "agent_info": "Requests processed by LangChain agent with database access"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/request/{request_id}")
-async def get_request_details(
-    request_id: int,
-    supervision_service: SupervisionService = Depends(get_supervision_service)
-):
-    """Get detailed request info with agent decision analysis"""
-    try:
-        details = await supervision_service.get_request_details(request_id)
-        
-        # Enhance with agent analysis
-        validation_checks = details.get("validation_results", {})
-        
-        enhanced_details = details.copy()
-        enhanced_details["agent_analysis"] = {
-            "processed_by_agent": validation_checks.get("processed_by") == "langchain_agent",
-            "agent_success": validation_checks.get("agent_success", False),
-            "business_analysis": validation_checks.get("business_analysis", ""),
-            "model_used": validation_checks.get("model_used", "unknown"),
-            "confidence_percentage": details["request"].get("confidence_score", 0) * 100 if details["request"].get("confidence_score") else 0
-        }
-        
-        return enhanced_details
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/request/{request_id}/reprocess-agent")
-async def reprocess_with_agent(
-    request_id: int,
-    additional_context: str = "",
-    reviewer_name: str = "supervisor",
-    discount_service: DiscountService = Depends(get_discount_service)
+    status: str = Query("pending", regex="^(pending|approved|rejected|sent)$"),
+    db: Session = Depends(get_db)
 ):
     """
-    Reprocess request with LangChain agent for second opinion
+    📋 Get items from supervision queue
+    
+    - **limit**: Maximum number of items to return (1-100)
+    - **status**: Filter by status (pending, approved, rejected, sent)
     """
     try:
-        from app.models.chat import AgentReprocessRequest
+        supervision_service = SupervisionQueueService(db)
         
-        reprocess_request = AgentReprocessRequest(
-            additional_context=additional_context,
-            reviewer_name=reviewer_name
-        )
-        
-        result = await discount_service.reprocess_with_agent(
-            request_id=request_id,
-            additional_context=reprocess_request.additional_context
-        )
-        
-        return {
-            "reprocessing_result": result,
-            "message": "Agent has reprocessed the request. Compare both decisions.",
-            "reviewer": reviewer_name
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/request/{request_id}/email")
-async def update_email_draft(
-    request_id: int,
-    update_request: EmailUpdateRequest,
-    supervision_service: SupervisionService = Depends(get_supervision_service)
-):
-    """Update email draft (now AI-generated by LangChain agent)"""
-    try:
-        result = await supervision_service.update_email_draft(
-            request_id=request_id,
-            new_email_content=update_request.email_content,
-            reviewer_name=update_request.reviewer_name,
-            notes=update_request.notes
-        )
-        
-        # Add note about agent generation
-        result["agent_note"] = "Original email was generated by LangChain agent"
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/request/{request_id}/approve")
-async def approve_and_send(
-    request_id: int,
-    approval_request: ApprovalRequest,
-    supervision_service: SupervisionService = Depends(get_supervision_service)
-):
-    """Final approval with one-click sending"""
-    try:
-        result = await supervision_service.approve_and_send_email(
-            request_id=request_id,
-            reviewer_name=approval_request.reviewer_name,
-            final_notes=approval_request.final_notes
-        )
-        
-        if result["success"]:
-            result["workflow"] = "langchain_agent -> human_review -> email_sent"
-            return result
+        if status == "pending":
+            items = supervision_service.get_pending_items(limit)
         else:
-            raise HTTPException(status_code=400, detail=result["error"])
-            
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/request/{request_id}/reject")
-async def reject_request(
-    request_id: int,
-    rejection_request: RejectionRequest,
-    supervision_service: SupervisionService = Depends(get_supervision_service)
-):
-    """Human override rejection"""
-    try:
-        result = await supervision_service.reject_request(
-            request_id=request_id,
-            reviewer_name=rejection_request.reviewer_name,
-            rejection_reason=rejection_request.rejection_reason
-        )
+            # Get items by specific status
+            from app.models.database import SupervisionQueue
+            items = db.query(SupervisionQueue)\
+                     .filter(SupervisionQueue.status == status)\
+                     .order_by(SupervisionQueue.created_at.desc())\
+                     .limit(limit)\
+                     .all()
         
-        result["workflow"] = "langchain_agent -> human_override -> rejected"
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        return {
+            "success": True,
+            "items": [item.to_dict() for item in items],
+            "count": len(items),
+            "status_filter": status
+        }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error fetching supervision queue: {str(e)}")
 
+@router.post("/queue/{item_id}/action")
+async def handle_supervision_action(
+    item_id: int,
+    action: SupervisionAction,
+    db: Session = Depends(get_db)
+):
+    """
+    ✅❌ Handle supervision action (approve/reject)
+    
+    - **item_id**: ID of the queue item
+    - **action**: "approve" or "reject"
+    - **reviewer**: Name of the reviewer
+    - **notes**: Optional notes from reviewer
+    """
+    try:
+        supervision_service = SupervisionQueueService(db)
+        
+        if action.action == "approve":
+            success = supervision_service.approve_item(item_id, action.reviewer, action.notes)
+            if success:
+                return {
+                    "success": True,
+                    "message": f"Item {item_id} approved by {action.reviewer}",
+                    "action": "approved"
+                }
+        elif action.action == "reject":
+            if not action.notes:
+                raise HTTPException(status_code=400, detail="Notes are required for rejection")
+            success = supervision_service.reject_item(item_id, action.reviewer, action.notes)
+            if success:
+                return {
+                    "success": True,
+                    "message": f"Item {item_id} rejected by {action.reviewer}",
+                    "action": "rejected"
+                }
+        else:
+            raise HTTPException(status_code=400, detail="Action must be 'approve' or 'reject'")
+        
+        raise HTTPException(status_code=404, detail=f"Item {item_id} not found or could not be processed")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing action: {str(e)}")
+
+@router.post("/queue/{item_id}/send")
+async def mark_as_sent(
+    item_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    📧 Mark approved item as sent
+    
+    - **item_id**: ID of the approved queue item
+    """
+    try:
+        supervision_service = SupervisionQueueService(db)
+        success = supervision_service.mark_as_sent(item_id)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Item {item_id} marked as sent",
+                "status": "sent"
+            }
+        else:
+            raise HTTPException(status_code=404, detail=f"Item {item_id} not found or not approved")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error marking as sent: {str(e)}")
 
 @router.get("/stats")
-async def get_supervision_stats(
-    supervision_service: SupervisionService = Depends(get_supervision_service),
-    discount_service: DiscountService = Depends(get_discount_service)
-):
-    """Enhanced stats with agent performance"""
+async def get_supervision_stats(db: Session = Depends(get_db)):
+    """
+    📊 Get supervision queue statistics
+    """
     try:
-        supervision_stats = await supervision_service.get_supervision_stats()
-        agent_stats = await discount_service.get_agent_stats()
+        supervision_service = SupervisionQueueService(db)
+        stats = supervision_service.get_queue_stats()
         
         return {
-            "supervision": supervision_stats,
-            "agent_performance": agent_stats,
-            "combined_metrics": {
-                "total_automation_rate": round(agent_stats["agent_success_rate"], 1),
-                "human_intervention_needed": supervision_stats["pending_reviews"],
-                "system_efficiency": "LangChain Agent + Human Supervision"
+            "success": True,
+            "stats": stats,
+            "queue_health": {
+                "pending_items": stats["pending"],
+                "approval_rate": round((stats["approved"] / max(stats["total"], 1)) * 100, 1),
+                "total_processed": stats["approved"] + stats["rejected"]
             }
         }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
 
-
-@router.get("/export/csv")
-async def export_requests_csv(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    status: Optional[str] = Query(None)
+@router.get("/queue/{item_id}")
+async def get_queue_item(
+    item_id: int,
+    db: Session = Depends(get_db)
 ):
-    """Export with agent decision data"""
-    return {
-        "message": "CSV export with LangChain agent data coming soon",
-        "filters": {
-            "start_date": start_date,
-            "end_date": end_date,
-            "status": status
-        },
-        "includes": ["agent_decisions", "confidence_scores", "business_analysis"]
-    } 
+    """
+    🔍 Get specific queue item details
+    
+    - **item_id**: ID of the queue item
+    """
+    try:
+        from app.models.database import SupervisionQueue
+        item = db.query(SupervisionQueue).filter(SupervisionQueue.id == item_id).first()
+        
+        if not item:
+            raise HTTPException(status_code=404, detail=f"Queue item {item_id} not found")
+        
+        return {
+            "success": True,
+            "item": item.to_dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching item: {str(e)}") 
