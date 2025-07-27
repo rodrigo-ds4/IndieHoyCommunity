@@ -1,0 +1,23 @@
+Estimado/a {user_name},
+
+Hemos revisado tu solicitud de descuento para "{show_description}".
+
+❌ SOLICITUD NO APROBADA
+
+📋 MOTIVO: {rejection_reason}
+
+💡 QUÉ PUEDES HACER:
+{next_steps}
+
+📞 ¿NECESITAS AYUDA?
+Si crees que hay un error o tienes alguna consulta, puedes:
+• Escribir a soporte@indiehoy.com
+• Revisar tu estado de cuenta en nuestra plataforma
+• Contactar por WhatsApp: +54 9 11 1234-5678
+
+📅 Recuerda que siempre puedes solicitar descuentos para otros shows disponibles.
+
+¡Gracias por ser parte de la comunidad IndieHOY!
+
+Equipo IndieHOY  
+🤠 Charro Bot 
