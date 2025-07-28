@@ -44,7 +44,7 @@ A complete solution that allows users to request discounts for shows through:
 ```mermaid
 graph TD
     A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
-    B --> C[Show List (Real Time)]
+    B --> C[Show List Real Time]
     C --> D[User Selects Show]
     D --> E[Email Validation<br/>POST /users/validate-email]
     E --> F{Email Valid?}
