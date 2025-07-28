@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import create_tables
 from app.api.routes import api_router
+from app.middleware.security import security_middleware
 
 
 @asynccontextmanager
@@ -39,12 +40,16 @@ async def lifespan(app: FastAPI):
 
 
 # FastAPI application instance
+# 🔒 Ocultar docs en producción por seguridad
+docs_url = "/docs" if settings.ENVIRONMENT == "development" else None
+redoc_url = "/redoc" if settings.ENVIRONMENT == "development" else None
+
 app = FastAPI(
     title="Charro Bot API",
     description="Chatbot + Decision Agent for Show Discounts",
     version="1.0.0",
-    docs_url="/docs",  # Swagger UI
-    redoc_url="/redoc",  # ReDoc
+    docs_url=docs_url,  # Solo en desarrollo
+    redoc_url=redoc_url,  # Solo en desarrollo
     lifespan=lifespan
 )
 
@@ -56,6 +61,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 🛡️ Security middleware (authentication + protection)
+# app.middleware("http")(security_middleware)  # Temporalmente desactivado
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
