@@ -1,375 +1,166 @@
-# 🎫 IndieHOY Discount System
-
-> **Sistema simple y confiable para solicitar descuentos en shows - Sin LLM, 100% determinístico**
-
-## 🎯 **Objetivo**
-
-Sistema completo que permite a usuarios solicitar descuentos en shows a través de:
-- **📝 Landing page** con búsqueda en tiempo real
-- **📧 Validación de email** previa
-- **👥 Dashboard de supervisión** humana
-- **⚡ Procesamiento súper rápido** (< 1 segundo)
-
-### ✅ **Estado Actual: COMPLETAMENTE FUNCIONAL**
+Got it. I'll provide the complete, updated content for you to **replace** in your `README.md` file. It includes the architecture diagram, schemas, and all other sections, fully in English.
 
 ---
 
-## 🏗️ **Arquitectura del Sistema**
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+-   A modern landing page with real-time show search
+-   Email pre-validation to ensure only eligible users can request discounts
+-   A human supervision dashboard for reviewing, editing, and approving requests
+-   Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1.  **Show Search:**
+    Users search for a show in real time and select from available options.
+
+2.  **Email Validation:**
+    The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3.  **Request Processing:**
+    If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4.  **Human Supervision:**
+    Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
 
 ```mermaid
 graph TD
-    A[👤 Usuario] --> B[📝 Landing Page]
-    B --> C{🔍 Buscar Show}
-    C -->|Escribe 2+ chars| D[GET /shows/search]
-    D --> E[🎭 Lista de Shows]
-    E --> F[👤 Usuario selecciona]
-    F --> G[📧 Validación Email]
-    G --> H[POST /users/validate-email]
-    H --> I{✅ Email Válido?}
-    I -->|❌ No| J[🚫 Mensaje Error]
-    I -->|⚠️ Problemas| K[⚠️ Pagos/Suscripción]
-    I -->|✅ Sí| L[🎫 Procesar Solicitud]
-    L --> M[POST /discounts/request]
-    M --> N[🔒 PreFilter]
-    N --> O[🔍 Fuzzy Matching]
-    O --> P[📧 Template Email]
-    P --> Q[👥 Cola Supervisión]
-    Q --> R[📊 Dashboard Supervisión]
-    R --> S{👨‍💼 Decisión Humana}
-    S -->|✅| T[📧 Email Enviado]
-    S -->|❌| U[📧 Email Rechazado]
-    S -->|✏️| V[📝 Email Editado]
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
 ```
 
 ---
 
-## 🚀 **Flujo Completo de Usuario**
+## Database Schemas
 
-### **1. 🔍 Búsqueda de Shows (Tiempo Real)**
-```
-Usuario escribe "Tini" → Frontend llama /shows/search → Backend busca fuzzy → 
-Muestra "Tini en concierto - Luna Park" → Usuario selecciona
-```
+### USERS
 
-### **2. 📧 Validación de Email (Pre-chequeo)**
-```
-Usuario presiona "Solicitar" → Frontend llama /users/validate-email → 
-Backend verifica: ¿Existe? ¿Suscripción activa? ¿Pagos al día? → 
-Si OK continúa, si no muestra error específico
-```
+| Field                | Type     | Description                 |
+| -------------------- | -------- | --------------------------- |
+| id                   | INT (PK) | Primary key                 |
+| name                 | STRING   | Full name                   |
+| email                | STRING   | Email address (unique)      |
+| phone                | STRING   | Phone number                |
+| subscription_active  | BOOLEAN  | Active subscription status  |
+| monthly_fee_current  | BOOLEAN  | Payment status (up to date) |
+| created_at           | DATETIME | Record creation             |
 
-### **3. 🎫 Procesamiento de Solicitud**
-```
-Frontend llama /discounts/request → Backend procesa con SimpleDiscountService → 
-PreFilter + Fuzzy Matching + Template Email → Cola de Supervisión → 
-Respuesta inmediata al usuario
-```
+### SHOWS
 
-### **4. 👥 Supervisión Humana**
-```
-Supervisor accede /supervision → Ve todas las solicitudes pendientes → 
-Puede aprobar, rechazar, o editar emails → Marcar como enviado
-```
+| Field         | Type     | Description                 |
+| ------------- | -------- | --------------------------- |
+| id            | INT (PK) | Primary key                 |
+| code          | STRING   | Internal show code (unique) |
+| title         | STRING   | Show title                  |
+| artist        | STRING   | Artist/performer name       |
+| venue         | STRING   | Venue location              |
+| show_date     | DATETIME | Show date and time          |
+| max_discounts | INT      | Maximum discounts available |
+| other_data    | JSON     | Additional flexible data    |
+| active        | BOOLEAN  | Show active status          |
 
----
+### DISCOUNT_REQUESTS
 
-## 🗃️ **Base de Datos**
+| Field          | Type     | Description                         |
+| -------------- | -------- | ----------------------------------- |
+| id             | INT (PK) | Primary key                         |
+| user_id        | INT (FK) | Reference to users.id               |
+| show_id        | INT (FK) | Reference to shows.id               |
+| approved       | BOOLEAN  | System decision (True/False/None)   |
+| human_approved | BOOLEAN  | Human supervisor approval           |
+| other_data     | JSON     | Flexible data (reason, email, etc)  |
+| request_date   | DATETIME | When request was made               |
 
-### **📊 Diagrama ER**
+### SUPERVISION_QUEUE
 
-```mermaid
-erDiagram
-    USERS {
-        int id PK
-        string name
-        string email UK
-        string phone
-        boolean subscription_active
-        boolean monthly_fee_current
-        datetime created_at
-    }
-
-    SHOWS {
-        int id PK
-        string code UK
-        string title
-        string artist
-        string venue
-        datetime show_date
-        int max_discounts
-        json other_data
-        boolean active
-    }
-
-    DISCOUNT_REQUESTS {
-        int id PK
-        int user_id FK
-        int show_id FK
-        boolean approved
-        boolean human_approved "SENT status"
-        json other_data
-        datetime request_date
-    }
-
-    SUPERVISION_QUEUE {
-        int id PK
-        string request_id UK
-        string user_email
-        string user_name
-        string show_description
-        string decision_type "approved/rejected/clarification"
-        string decision_source "prefilter/template"
-        string email_subject
-        text email_content
-        string status "pending/approved/sent"
-        datetime created_at
-    }
-
-    USERS ||--o{ DISCOUNT_REQUESTS : "solicita"
-    SHOWS ||--o{ DISCOUNT_REQUESTS : "para"
-    DISCOUNT_REQUESTS ||--o| SUPERVISION_QUEUE : "genera"
-```
+| Field            | Type     | Description                         |
+| ---------------- | -------- | ----------------------------------- |
+| id               | INT (PK) | Primary key                         |
+| request_id       | STRING   | Unique request identifier           |
+| user_email       | STRING   | User email                          |
+| user_name        | STRING   | User name                           |
+| show_description | STRING   | Show description                    |
+| decision_type    | STRING   | approved/rejected/clarification     |
+| decision_source  | STRING   | prefilter/template                  |
+| email_subject    | STRING   | Email subject                       |
+| email_content    | TEXT     | Email content                       |
+| status           | STRING   | pending/approved/sent               |
+| created_at       | DATETIME | Record creation                     |
 
 ---
 
-## 🌐 **Frontend - Landing Page**
+## API Endpoints
 
-### **📱 Características**
-- **🎨 Diseño moderno** con Tailwind CSS
-- **🔍 Búsqueda en tiempo real** (debounce 300ms)
-- **📧 Validación previa** de email
-- **⚡ Spinners específicos** por etapa
-- **💬 Mensajes contextuales** (success/error/warning/info)
-- **📱 Completamente responsive**
-
-### **🧪 Casos de Uso del Frontend**
-
-| **Etapa** | **Acción** | **Endpoint** | **Resultado** |
-|-----------|------------|--------------|---------------|
-| 🔍 Búsqueda | Usuario escribe "Tini" | `GET /api/v1/shows/search?q=tini` | Lista shows con descuentos |
-| 📧 Validación | Presiona "Solicitar" | `POST /api/v1/users/validate-email` | ✅ Válido / ❌ Error específico |
-| 🎫 Solicitud | Email OK → procesa | `POST /api/v1/discounts/request` | Enviado a supervisión |
-
-### **🎯 Estados del Botón**
-```javascript
-"Solicitar Descuento"           // Estado inicial
-"⏳ Validando email..."         // Validando email
-"⏳ Procesando solicitud..."    // Procesando descuento  
-"✅ ¡Solicitud Enviada!"        // Completado
-```
+-   `GET /api/v1/shows/search?q={query}` – Real-time show search
+-   `POST /api/v1/users/validate-email` – Email pre-validation
+-   `POST /api/v1/discounts/request` – Submit a discount request
+-   `GET /api/v1/supervision/queue?status={status}` – List requests by status
+-   `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+-   `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+-   `GET /health` – System health check
+-   `GET /docs` – API documentation
 
 ---
 
-## 🛠️ **Backend - API Endpoints**
+## Tech Stack
 
-### **🎭 Shows**
-- `GET /api/v1/shows/search?q={query}&limit={n}` - Búsqueda fuzzy de shows
-- `GET /api/v1/shows/available` - Todos los shows con descuentos
-
-### **👥 Users** 
-- `POST /api/v1/users/validate-email` - Validación previa de email
-- `GET /api/v1/users/check-email?email={email}` - Chequeo simple existencia
-
-### **🎫 Discounts**
-- `POST /api/v1/discounts/request` - Solicitar descuento (flujo completo)
-
-### **👨‍💼 Supervision**
-- `GET /api/v1/supervision/queue?status={status}` - Items por estado
-- `POST /api/v1/supervision/queue/{id}/action` - Aprobar/Rechazar
-- `POST /api/v1/supervision/queue/{id}/send` - Marcar como enviado
-- `GET /api/v1/supervision/stats` - Estadísticas de la cola
-
-### **🏥 Health**
-- `GET /health` - Estado del sistema
-- `GET /docs` - Documentación Swagger
+-   **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+-   **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+-   **DevOps:** Docker, Git, GitHub
 
 ---
 
-## ⚡ **Servicios Backend**
+## Setup
 
-### **🔒 PreFilter Service**
-```python
-# Validaciones determinísticas rápidas
-- ✅ Usuario existe
-- ✅ Suscripción activa  
-- ✅ Pagos al día
-- ✅ Sin duplicados recientes (24h)
-```
-
-### **🔍 Simple Discount Service**
-```python
-# Procesamiento principal
-- PreFilter validations
-- Fuzzy show matching (fuzzywuzzy)
-- Template email generation  
-- Supervision queue integration
-```
-
-### **📧 Template Email Service**
-```python
-# Emails fijos con datos reales
-- generate_approval_email()    # Con código descuento real
-- generate_rejection_email()   # Por motivo específico
-- generate_clarification_email() # Para múltiples shows
-```
-
-### **👥 Supervision Queue Service**
-```python
-# Gestión de cola humana
-- add_to_queue()      # Agregar decisión
-- get_pending_items() # Items pendientes
-- approve_item()      # Aprobar con supervisor
-```
-
----
-
-## 🧪 **Datos de Prueba**
-
-### **📧 Emails Disponibles**
 ```bash
-✅ juan@test.com     # Usuario válido (puede solicitar)
-❌ maria@test.com    # Pagos atrasados  
-❌ carlos@test.com   # Suscripción inactiva
-❌ noexiste@test.com # No registrado
-```
-
-### **🎭 Shows Disponibles**
-```bash
-🎫 "Tini en concierto" - Tini (5 descuentos)
-🎫 "Los Piojos Tribute" - Los Piojos (8 descuentos)  
-🎫 "Wos en vivo" - Wos (3 descuentos)
-```
-
----
-
-## 🚀 **Setup y Despliegue**
-
-### **📦 Ejecutar el Sistema**
-```bash
-# 1. Clonar repositorio
 git clone <repo-url>
 cd backend
-
-# 2. Construir y ejecutar
-docker stop charro-backend || true
-docker rm charro-backend || true  
 docker build -t charro-backend .
 docker run -d -p 8000:8000 --name charro-backend charro-backend
-
-# 3. Verificar funcionamiento
-curl http://localhost:8000/health
-# Response: {"status":"healthy","service":"charro-bot-api"}
 ```
 
-### **🌐 URLs Disponibles**
-```bash
-📝 Landing Page:    http://localhost:8000/request
-👥 Admin Dashboard: http://localhost:8000/supervision
-🔍 API Docs:        http://localhost:8000/docs
-🏥 Health Check:    http://localhost:8000/health
-```
+-   Landing Page: http://localhost:8000/request
+-   Admin Dashboard: http://localhost:8000/supervision
+-   API Docs: http://localhost:8000/docs
+-   Health Check: http://localhost:8000/health
 
 ---
 
-## 🧪 **Testing del Sistema**
+## Roadmap
 
-### **✅ Caso Exitoso**
-```bash
-# En http://localhost:8000/request
-Email: juan@test.com
-Nombre: Juan Pérez  
-Show: Tini (buscar "tini")
-
-Resultado: ✅ Aprobado → Cola supervisión → Email generado con código descuento
-```
-
-### **❌ Casos de Error**
-```bash
-Email no registrado → "📧 Email no registrado. Por favor verifique..."
-Pagos atrasados → "💳 Tiene pagos pendientes. Para solicitar descuentos..."
-Suscripción inactiva → "⚠️ Su suscripción está inactiva. Para solicitar..."
-```
-
----
-
-## 📊 **Ventajas del Sistema Actual**
-
-### **⚡ Rendimiento**
-- **Antes:** 3+ minutos (LLM fallando)
-- **Ahora:** < 1 segundo ✅
-
-### **🎯 Confiabilidad**  
-- **Antes:** Errores técnicos + alucinaciones
-- **Ahora:** 100% funcional ✅
-
-### **💰 Datos Reales**
-- **Antes:** Precios inventados por LLM
-- **Ahora:** Datos reales de DB ✅
-
-### **🔒 Validación**
-- **Antes:** LLM ignoraba reglas de negocio
-- **Ahora:** Validación determinística ✅
-
----
-
-## 🛠️ **Stack Tecnológico**
-
-### **Backend**
-- **Python 3.11** + **FastAPI** + **SQLAlchemy**
-- **SQLite** (desarrollo) / **PostgreSQL** (producción)
-- **Pydantic** para validación de datos
-- **FuzzyWuzzy** para matching de shows
-
-### **Frontend**
-- **HTML5** + **JavaScript ES6** + **Tailwind CSS**
-- **Fetch API** para llamadas asíncronas
-- **Font Awesome** para iconos
-
-### **DevOps**
-- **Docker** para containerización
-- **Git** para control de versiones
-- **GitHub** para repositorio
-
----
-
-## 🎯 **Próximos Pasos**
-
-1. **📧 Integración SMTP** - Envío real de emails
-2. **🔐 Autenticación** - Login para supervisores
-3. **📊 Analytics** - Métricas de uso
-4. **🚀 Producción** - Deploy a servidor real
-5. **📱 Mobile App** - Versión nativa móvil
-
----
-
-## 👨‍💻 **Desarrollo**
-
-### **🗂️ Estructura del Proyecto**
-```
-backend/
-├── app/
-│   ├── models/
-│   │   └── database.py              # Modelos SQLAlchemy
-│   ├── api/endpoints/
-│   │   ├── discounts.py            # Solicitudes descuento
-│   │   ├── users.py                # Validación usuarios
-│   │   ├── shows.py                # Búsqueda shows
-│   │   └── supervision.py          # Dashboard supervisión
-│   ├── services/
-│   │   ├── simple_discount_service.py    # Lógica principal
-│   │   ├── template_email_service.py     # Emails templates
-│   │   └── supervision_queue_service.py  # Cola supervisión
-│   └── core/
-│       ├── config.py               # Configuración
-│       └── database.py             # Conexión DB
-├── static/
-│   ├── request-discount.html       # Landing page
-│   └── supervision.html            # Dashboard admin
-├── Dockerfile                      # Container definition
-├── requirements.txt               # Dependencias Python
-└── main.py                       # Entrada FastAPI
-```
-
----
-
-**🎉 Sistema 100% Funcional - Listo para Producción**
+-   **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+-   **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.

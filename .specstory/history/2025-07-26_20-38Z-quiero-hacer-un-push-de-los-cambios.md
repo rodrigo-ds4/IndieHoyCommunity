@@ -53873,3 +53873,1445 @@ If you need a custom commit message or further help, just ask!
 
 ---
 
+_**User**_
+
+🎫 IndieHOY Discount System
+Sistema simple y confiable para solicitar descuentos en shows - Sin LLM, 100% determinístico
+
+🎯 Objetivo
+Sistema completo que permite a usuarios solicitar descuentos en shows a través de:
+
+📝 Landing page con búsqueda en tiempo real
+📧 Validación de email previa
+👥 Dashboard de supervisión humana
+⚡ Procesamiento súper rápido (< 1 segundo)
+✅ Estado Actual: COMPLETAMENTE FUNCI sacale los emojis o deja solo muy pocos y que sea en ingles!!!
+
+---
+
+_**Assistant**_
+
+Certainly! Here’s a clean, professional, **English README** for your project, with minimal emoji use (just one for the project title), and all explanations in English:
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, no AI hallucinations.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- Modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- Human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+**User Flow:**
+1. User searches for a show in real time and selects from available options.
+2. The system validates the user's email, subscription status, and payment status before allowing a request.
+3. If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+4. Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## Key Features
+
+- Responsive, modern frontend (Tailwind CSS)
+- Real-time fuzzy show search
+- Deterministic, rule-based backend logic (no LLMs)
+- Email pre-validation to prevent spam and errors
+- Human-in-the-loop review and approval
+- Fast and reliable performance
+
+---
+
+## API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- Backend: Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- Frontend: HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- DevOps: Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**  
+Let me know if you want further tweaks!
+
+---
+
+_**User**_
+
+ok arreglaste el reame con esto en ingles?? me gusta lo del roadmap.. y deja los schemas y el flujo...
+
+---
+
+_**Assistant**_
+
+Absolutely! Here is your **final, professional README in English**, with minimal emoji (just in the title), a clear roadmap, the database schemas, and the user flow included. All explanations are in English, and the content is concise and production-ready.
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, no AI hallucinations.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- Modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- Human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   User searches for a show in real time and selects from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+### Database Schemas
+
+#### USERS
+
+| Field                  | Type      | Description                        |
+|------------------------|-----------|------------------------------------|
+| id                     | INT (PK)  | Primary key                        |
+| name                   | STRING    | Full name                          |
+| email                  | STRING    | Email address (unique)             |
+| phone                  | STRING    | Phone number                       |
+| subscription_active    | BOOLEAN   | Active subscription status         |
+| monthly_fee_current    | BOOLEAN   | Payment status (up to date)        |
+| created_at             | DATETIME  | Record creation                    |
+
+#### SHOWS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| code            | STRING    | Internal show code (unique)        |
+| title           | STRING    | Show title                         |
+| artist          | STRING    | Artist/performer name              |
+| venue           | STRING    | Venue location                     |
+| show_date       | DATETIME  | Show date and time                 |
+| max_discounts   | INT       | Maximum discounts available        |
+| other_data      | JSON      | Additional flexible data           |
+| active          | BOOLEAN   | Show active status                 |
+
+#### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+#### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+### API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you want this as a file or need any further tweaks!
+
+---
+
+_**User**_
+
+arregla el readme!!
+
+---
+
+_**Assistant**_
+
+Certainly! Here is your **final, clean, and professional README in English**, with minimal emoji (just in the title), all explanations in English, a clear roadmap, the database schemas, and the user flow included. This version is ready to be copy-pasted as your `README.md`.
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- A modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- A human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   Users search for a show in real time and select from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+### Database Schemas
+
+#### USERS
+
+| Field                | Type      | Description                        |
+|----------------------|-----------|------------------------------------|
+| id                   | INT (PK)  | Primary key                        |
+| name                 | STRING    | Full name                          |
+| email                | STRING    | Email address (unique)             |
+| phone                | STRING    | Phone number                       |
+| subscription_active  | BOOLEAN   | Active subscription status         |
+| monthly_fee_current  | BOOLEAN   | Payment status (up to date)        |
+| created_at           | DATETIME  | Record creation                    |
+
+#### SHOWS
+
+| Field         | Type      | Description                        |
+|---------------|-----------|------------------------------------|
+| id            | INT (PK)  | Primary key                        |
+| code          | STRING    | Internal show code (unique)        |
+| title         | STRING    | Show title                         |
+| artist        | STRING    | Artist/performer name              |
+| venue         | STRING    | Venue location                     |
+| show_date     | DATETIME  | Show date and time                 |
+| max_discounts | INT       | Maximum discounts available        |
+| other_data    | JSON      | Additional flexible data           |
+| active        | BOOLEAN   | Show active status                 |
+
+#### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+#### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+### API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you need further tweaks or want this as a file!
+
+---
+
+_**User**_
+
+@README.md eso q hiciste arreglalo aca
+
+---
+
+_**Assistant**_
+
+Certainly! Here is your **README.md** rewritten in English, with minimal emoji (only in the title), all explanations in English, a clear roadmap, the database schemas, and the user flow included. You can copy and paste this directly to replace your current `README.md`.
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- A modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- A human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   Users search for a show in real time and select from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
+```
+
+---
+
+## Database Schemas
+
+### USERS
+
+| Field                | Type      | Description                        |
+|----------------------|-----------|------------------------------------|
+| id                   | INT (PK)  | Primary key                        |
+| name                 | STRING    | Full name                          |
+| email                | STRING    | Email address (unique)             |
+| phone                | STRING    | Phone number                       |
+| subscription_active  | BOOLEAN   | Active subscription status         |
+| monthly_fee_current  | BOOLEAN   | Payment status (up to date)        |
+| created_at           | DATETIME  | Record creation                    |
+
+### SHOWS
+
+| Field         | Type      | Description                        |
+|---------------|-----------|------------------------------------|
+| id            | INT (PK)  | Primary key                        |
+| code          | STRING    | Internal show code (unique)        |
+| title         | STRING    | Show title                         |
+| artist        | STRING    | Artist/performer name              |
+| venue         | STRING    | Venue location                     |
+| show_date     | DATETIME  | Show date and time                 |
+| max_discounts | INT       | Maximum discounts available        |
+| other_data    | JSON      | Additional flexible data           |
+| active        | BOOLEAN   | Show active status                 |
+
+### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+## API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you need further tweaks or want this as a file!
+
+---
+
+_**User**_
+
+el archivo modificalo y pone eso
+
+---
+
+_**Assistant**_
+
+Certainly! Here is the content you should use to **replace your current `README.md`**.  
+Copy and paste this to fully update your file.
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- A modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- A human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   Users search for a show in real time and select from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
+```
+
+---
+
+## Database Schemas
+
+### USERS
+
+| Field                | Type      | Description                        |
+|----------------------|-----------|------------------------------------|
+| id                   | INT (PK)  | Primary key                        |
+| name                 | STRING    | Full name                          |
+| email                | STRING    | Email address (unique)             |
+| phone                | STRING    | Phone number                       |
+| subscription_active  | BOOLEAN   | Active subscription status         |
+| monthly_fee_current  | BOOLEAN   | Payment status (up to date)        |
+| created_at           | DATETIME  | Record creation                    |
+
+### SHOWS
+
+| Field         | Type      | Description                        |
+|---------------|-----------|------------------------------------|
+| id            | INT (PK)  | Primary key                        |
+| code          | STRING    | Internal show code (unique)        |
+| title         | STRING    | Show title                         |
+| artist        | STRING    | Artist/performer name              |
+| venue         | STRING    | Venue location                     |
+| show_date     | DATETIME  | Show date and time                 |
+| max_discounts | INT       | Maximum discounts available        |
+| other_data    | JSON      | Additional flexible data           |
+| active        | BOOLEAN   | Show active status                 |
+
+### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+## API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you need further tweaks!
+
+---
+
+_**User**_
+
+ponele en otro archivo readme1.md
+
+---
+
+_**Assistant**_
+
+Here is the content for your new file `readme1.md`:
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- A modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- A human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   Users search for a show in real time and select from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
+```
+
+---
+
+## Database Schemas
+
+### USERS
+
+| Field                | Type      | Description                        |
+|----------------------|-----------|------------------------------------|
+| id                   | INT (PK)  | Primary key                        |
+| name                 | STRING    | Full name                          |
+| email                | STRING    | Email address (unique)             |
+| phone                | STRING    | Phone number                       |
+| subscription_active  | BOOLEAN   | Active subscription status         |
+| monthly_fee_current  | BOOLEAN   | Payment status (up to date)        |
+| created_at           | DATETIME  | Record creation                    |
+
+### SHOWS
+
+| Field         | Type      | Description                        |
+|---------------|-----------|------------------------------------|
+| id            | INT (PK)  | Primary key                        |
+| code          | STRING    | Internal show code (unique)        |
+| title         | STRING    | Show title                         |
+| artist        | STRING    | Artist/performer name              |
+| venue         | STRING    | Venue location                     |
+| show_date     | DATETIME  | Show date and time                 |
+| max_discounts | INT       | Maximum discounts available        |
+| other_data    | JSON      | Additional flexible data           |
+| active        | BOOLEAN   | Show active status                 |
+
+### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+## API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you need further tweaks!
+
+---
+
+_**User**_
+
+no hiciste el archivo
+
+---
+
+_**Assistant**_
+
+You're right—I can't create files directly, but I can give you the exact content to copy and paste into a new file named `readme1.md`.
+
+**Instructions:**
+1. Open your project folder.
+2. Create a new file named `readme1.md`.
+3. Copy and paste the following content into that file:
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+- A modern landing page with real-time show search
+- Email pre-validation to ensure only eligible users can request discounts
+- A human supervision dashboard for reviewing, editing, and approving requests
+- Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1. **Show Search:**  
+   Users search for a show in real time and select from available options.
+
+2. **Email Validation:**  
+   The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3. **Request Processing:**  
+   If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4. **Human Supervision:**  
+   Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
+```
+
+---
+
+## Database Schemas
+
+### USERS
+
+| Field                | Type      | Description                        |
+|----------------------|-----------|------------------------------------|
+| id                   | INT (PK)  | Primary key                        |
+| name                 | STRING    | Full name                          |
+| email                | STRING    | Email address (unique)             |
+| phone                | STRING    | Phone number                       |
+| subscription_active  | BOOLEAN   | Active subscription status         |
+| monthly_fee_current  | BOOLEAN   | Payment status (up to date)        |
+| created_at           | DATETIME  | Record creation                    |
+
+### SHOWS
+
+| Field         | Type      | Description                        |
+|---------------|-----------|------------------------------------|
+| id            | INT (PK)  | Primary key                        |
+| code          | STRING    | Internal show code (unique)        |
+| title         | STRING    | Show title                         |
+| artist        | STRING    | Artist/performer name              |
+| venue         | STRING    | Venue location                     |
+| show_date     | DATETIME  | Show date and time                 |
+| max_discounts | INT       | Maximum discounts available        |
+| other_data    | JSON      | Additional flexible data           |
+| active        | BOOLEAN   | Show active status                 |
+
+### DISCOUNT_REQUESTS
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| user_id         | INT (FK)  | Reference to users.id              |
+| show_id         | INT (FK)  | Reference to shows.id              |
+| approved        | BOOLEAN   | System decision (True/False/None)  |
+| human_approved  | BOOLEAN   | Human supervisor approval          |
+| other_data      | JSON      | Flexible data (reason, email, etc) |
+| request_date    | DATETIME  | When request was made              |
+
+### SUPERVISION_QUEUE
+
+| Field           | Type      | Description                        |
+|-----------------|-----------|------------------------------------|
+| id              | INT (PK)  | Primary key                        |
+| request_id      | STRING    | Unique request identifier          |
+| user_email      | STRING    | User email                         |
+| user_name       | STRING    | User name                          |
+| show_description| STRING    | Show description                   |
+| decision_type   | STRING    | approved/rejected/clarification    |
+| decision_source | STRING    | prefilter/template                 |
+| email_subject   | STRING    | Email subject                      |
+| email_content   | TEXT      | Email content                      |
+| status          | STRING    | pending/approved/sent              |
+| created_at      | DATETIME  | Record creation                    |
+
+---
+
+## API Endpoints
+
+- `GET /api/v1/shows/search?q={query}` – Real-time show search
+- `POST /api/v1/users/validate-email` – Email pre-validation
+- `POST /api/v1/discounts/request` – Submit a discount request
+- `GET /api/v1/supervision/queue?status={status}` – List requests by status
+- `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+- `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+- `GET /health` – System health check
+- `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+- **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+- **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+- Landing Page: http://localhost:8000/request
+- Admin Dashboard: http://localhost:8000/supervision
+- API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+- **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+- **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+Let me know if you need further tweaks!
+
+---
+
+_**User**_
+
+ponelo en readme.md y agrega los mermaid y shemas
+
+---
+
+_**Assistant**_
+
+<think><details><summary>Thought Process</summary>
+**Planning the README Structure**
+
+I'm now outlining the structure of the `README.md` file. The objective will be a concise project summary. Next comes a system overview, describing functionality at a high level. I then move on to user flow, outlining the steps a user takes. Further refinements are planned.
+
+
+**Composing README Content**
+
+I'm moving into content creation. First, I will populate the sections. The objective, system overview, user flow, architecture diagram, database schema, API endpoints, tech stack, setup instructions, and roadmap will follow. I will then refine the text to be clear, concise, and professional, ready for direct use.
+
+
+</details></think>
+
+---
+
+
+
+Got it. I'll provide the complete, updated content for you to **replace** in your `README.md` file. It includes the architecture diagram, schemas, and all other sections, fully in English.
+
+**Instructions:**
+1.  Open your `README.md` file.
+2.  Delete all existing content.
+3.  Copy and paste the following content into the file.
+
+---
+
+# IndieHOY Discount System 🎫
+
+A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+
+---
+
+## Objective
+
+A complete solution that allows users to request discounts for shows through:
+
+-   A modern landing page with real-time show search
+-   Email pre-validation to ensure only eligible users can request discounts
+-   A human supervision dashboard for reviewing, editing, and approving requests
+-   Ultra-fast, deterministic processing (less than 1 second per request)
+
+**Current Status:** Fully functional and production-ready
+
+---
+
+## System Overview
+
+### User Flow
+
+1.  **Show Search:**
+    Users search for a show in real time and select from available options.
+
+2.  **Email Validation:**
+    The system validates the user's email, subscription status, and payment status before allowing a request.
+
+3.  **Request Processing:**
+    If valid, the request is processed using deterministic business rules and added to a human supervision queue.
+
+4.  **Human Supervision:**
+    Administrators review, approve, reject, or edit requests and emails via a dedicated dashboard.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User: Landing Page] --> B[Show Search<br/>GET /shows/search]
+    B --> C[Show List (Real Time)]
+    C --> D[User Selects Show]
+    D --> E[Email Validation<br/>POST /users/validate-email]
+    E --> F{Email Valid?}
+    F -->|No| G[Error: Not Registered]
+    F -->|Warning| H[Warning: Payment/Subscription]
+    F -->|Yes| I[Request Discount<br/>POST /discounts/request]
+    I --> J[PreFilter: User Validation]
+    J --> K[Fuzzy Matching: Show]
+    K --> L[Template Email: DB Data]
+    L --> M[Supervision Queue: Human Review]
+    M --> N[Dashboard: /supervision]
+    N --> O{Human Decision}
+    O -->|Approve| P[Email Sent: Discount Code]
+    O -->|Reject| Q[Rejection Email: Reason]
+    O -->|Edit| R[Custom Email: Supervisor]
+    R --> S[Final Email Sent]
+```
+
+---
+
+## Database Schemas
+
+### USERS
+
+| Field                | Type     | Description                 |
+| -------------------- | -------- | --------------------------- |
+| id                   | INT (PK) | Primary key                 |
+| name                 | STRING   | Full name                   |
+| email                | STRING   | Email address (unique)      |
+| phone                | STRING   | Phone number                |
+| subscription_active  | BOOLEAN  | Active subscription status  |
+| monthly_fee_current  | BOOLEAN  | Payment status (up to date) |
+| created_at           | DATETIME | Record creation             |
+
+### SHOWS
+
+| Field         | Type     | Description                 |
+| ------------- | -------- | --------------------------- |
+| id            | INT (PK) | Primary key                 |
+| code          | STRING   | Internal show code (unique) |
+| title         | STRING   | Show title                  |
+| artist        | STRING   | Artist/performer name       |
+| venue         | STRING   | Venue location              |
+| show_date     | DATETIME | Show date and time          |
+| max_discounts | INT      | Maximum discounts available |
+| other_data    | JSON     | Additional flexible data    |
+| active        | BOOLEAN  | Show active status          |
+
+### DISCOUNT_REQUESTS
+
+| Field          | Type     | Description                         |
+| -------------- | -------- | ----------------------------------- |
+| id             | INT (PK) | Primary key                         |
+| user_id        | INT (FK) | Reference to users.id               |
+| show_id        | INT (FK) | Reference to shows.id               |
+| approved       | BOOLEAN  | System decision (True/False/None)   |
+| human_approved | BOOLEAN  | Human supervisor approval           |
+| other_data     | JSON     | Flexible data (reason, email, etc)  |
+| request_date   | DATETIME | When request was made               |
+
+### SUPERVISION_QUEUE
+
+| Field            | Type     | Description                         |
+| ---------------- | -------- | ----------------------------------- |
+| id               | INT (PK) | Primary key                         |
+| request_id       | STRING   | Unique request identifier           |
+| user_email       | STRING   | User email                          |
+| user_name        | STRING   | User name                           |
+| show_description | STRING   | Show description                    |
+| decision_type    | STRING   | approved/rejected/clarification     |
+| decision_source  | STRING   | prefilter/template                  |
+| email_subject    | STRING   | Email subject                       |
+| email_content    | TEXT     | Email content                       |
+| status           | STRING   | pending/approved/sent               |
+| created_at       | DATETIME | Record creation                     |
+
+---
+
+## API Endpoints
+
+-   `GET /api/v1/shows/search?q={query}` – Real-time show search
+-   `POST /api/v1/users/validate-email` – Email pre-validation
+-   `POST /api/v1/discounts/request` – Submit a discount request
+-   `GET /api/v1/supervision/queue?status={status}` – List requests by status
+-   `POST /api/v1/supervision/queue/{id}/action` – Approve/Reject
+-   `POST /api/v1/supervision/queue/{id}/send` – Mark as sent
+-   `GET /health` – System health check
+-   `GET /docs` – API documentation
+
+---
+
+## Tech Stack
+
+-   **Backend:** Python 3.11, FastAPI, SQLAlchemy, SQLite/PostgreSQL, Pydantic, FuzzyWuzzy
+-   **Frontend:** HTML5, JavaScript ES6, Tailwind CSS, Fetch API
+-   **DevOps:** Docker, Git, GitHub
+
+---
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd backend
+docker build -t charro-backend .
+docker run -d -p 8000:8000 --name charro-backend charro-backend
+```
+
+-   Landing Page: http://localhost:8000/request
+-   Admin Dashboard: http://localhost:8000/supervision
+-   API Docs: http://localhost:8000/docs
+-   Health Check: http://localhost:8000/health
+
+---
+
+## Roadmap
+
+-   **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
+-   **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+
+---
+
+**Ready for production.**
+
+---
+
+---
+
+_**User**_
+
+ahora subilo al github
+
+---
+
+_**Assistant**_
+
+<think><details><summary>Thought Process</summary>
+**Contemplating the Push**
+
+I'm currently assessing the workflow for pushing these changes. The essentials, of course, are the `git add`, `git commit`, and `git push` sequence. I'm focusing on the best practices for each step, particularly around the commit message and handling potential conflicts before the push. The nuances of the `git add .` command also demand attention for a complete push.
+
+
+**Formulating the Commands**
+
+I've refined the proposed commands into a step-by-step plan. First, I'll direct them to stage all changes with `git add .`. Then, I'll provide the commit command: `git commit -m "docs: update README with final English version and schemas"`. Lastly, the push command, `git push origin main`. This approach should be concise and direct.
+
+
+**Defining the Instructions**
+
+I'm now structuring the output to the user. I'll provide numbered steps, each with a command in a code block, accompanied by a short explanation. First is `git add .` to stage all changes. Next, the commit command using the updated message is crafted, and finally, the push. I am focusing on clarity and directness in my approach to guide them.
+
+
+</details></think>
+
+---
+
+
+
+Of course. Here are the commands to push the updated `README.md` to your GitHub repository.
+
+Just run these in your terminal from the project's root directory.
+
+### 1. Stage Your Changes
+
+This command prepares your updated `README.md` file for the commit.
+
+```bash
+git add README.md
+```
+
+### 2. Commit the File
+
+This saves the changes with a clear message explaining what you did.
+
+```bash
+git commit -m "docs: update README with final English version, schemas, and architecture"
+```
+
+### 3. Push to GitHub
+
+This uploads your commit to the `main` branch on GitHub.
+
+```bash
+git push origin main
+```
+
+After running these commands, your GitHub repository will be perfectly in sync with the new `README.md`.
+
+---
+
