@@ -1,70 +1,126 @@
 """
 Template Email Service
-Replaces LLM with fixed templates and real database data
+Generates emails using dynamic templates stored in the database.
 """
 
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import uuid
+import logging
 from sqlalchemy.orm import Session
-from app.models.database import Show, User
+from app.models.database import Show, User, EmailTemplate
 
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class TemplateEmailService:
     """
-    🚀 SIMPLE & RELIABLE EMAIL GENERATION
-    
-    Uses fixed templates with real database data instead of LLM.
-    Benefits:
-    - ⚡ Super fast (< 100ms)
-    - 🎯 100% reliable 
-    - 🚫 No hallucinations
-    - 📧 Consistent formatting
+        DYNAMIC & RELIABLE EMAIL GENERATION
     """
-    
+
     def __init__(self, db_session: Session):
         self.db = db_session
-    
+
+    def _get_template(self, template_name: str) -> Dict[str, str]:
+        """
+        Fetches an email template from the database.
+        Returns a fallback template if not found to ensure system stability.
+        """
+        template = self.db.query(EmailTemplate).filter(EmailTemplate.template_name == template_name).first()
+        if template:
+            return {"subject": template.subject, "body": template.body}
+
+        logger.warning(f"Email template '{template_name}' not found in database. Using fallback.")
+        
+        # Fallback templates to prevent crashes if DB is not populated
+        fallbacks = {
+            "approval": {
+                "subject": "✅ ¡Tu descuento para {show_title} fue aprobado!",
+                "body": "¡Hola {user_name}!\n\nBuenas noticias. Tu solicitud de descuento para el show de {show_title} fue aprobada.\n\nSeguí los siguientes pasos:\n{discount_details}\n\nCódigo de Descuento: {discount_code}\n\nPresentá este email en la boletería para hacerlo válido. ¡Que lo disfrutes!\n\n- El equipo de IndieHOY."
+            },
+            "rejection_user_not_found": {
+                "subject": "❌ Solicitud de descuento - Usuario no encontrado",
+                "body": "Hola {user_name},\n\nNo pudimos procesar tu solicitud porque el email {user_email} no está registrado."
+            }
+        }
+        
+        default_fallback = {
+            "subject": "Actualización sobre tu solicitud de descuento",
+            "body": "Hubo una actualización sobre tu solicitud de descuento para {show_description}."
+        }
+
+        return fallbacks.get(template_name, default_fallback)
+
+    def _replace_placeholders(self, text: str, context: Dict[str, Any]) -> str:
+        """
+        Replaces placeholders like {key} or {nested.key} in a string with values from a context dict.
+        """
+        for key, value in context.items():
+            text = text.replace(f"{{{key}}}", str(value))
+        return text
+
+    def _build_context(self, user: Optional[User] = None, show: Optional[Show] = None, **kwargs) -> Dict[str, Any]:
+        """
+        Builds a flattened context dictionary for placeholder replacement.
+        """
+        context = {}
+        
+        # Flatten user data
+        if user:
+            context.update({
+                "user_name": user.name,
+                "user_email": user.email,
+            })
+        
+        # Flatten show data, including other_data
+        if show:
+            context.update({
+                "show_title": show.title,
+                "show_artist": show.artist,
+                "show_venue": show.venue,
+                "show_date": show.show_date.strftime('%d/%m/%Y'),
+                "show_code": show.code
+            })
+            if show.other_data:
+                for k, v in show.other_data.items():
+                    context[f"other_data.{k}"] = v
+        
+        # Add any other dynamic data passed to the function
+        context.update(kwargs)
+        
+        # Add a default value for any missing placeholders to avoid errors
+        import collections
+        context = collections.defaultdict(lambda: '[DATO NO DISPONIBLE]', context)
+        
+        return context
+
     def generate_approval_email(self, user: User, show: Show, reasoning: str = "") -> Dict[str, Any]:
         """
-        ✅ Generate approval email with real data from database
+        ✅ Genera el email de aprobación usando una plantilla base de la DB
+           y los detalles específicos del descuento desde el campo `other_data` del show.
         """
+        template = self._get_template("approval")
+        
+        # 1. El código de descuento se sigue generando de forma única
         discount_code = f"DESC-{show.code}-{uuid.uuid4().hex[:8].upper()}"
-        discount_percentage = 15  # Fixed 15% discount
-        original_price = show.other_data.get('price', 0) if show.other_data else 0
-        discounted_price = int(original_price * 0.85)  # 15% off
+
+        # 2. Los detalles específicos del descuento se leen del JSON del show
+        #    Esto hace que cada show pueda tener su propia lógica (2x1, 30%, etc.)
+        discount_details = "[No se especificaron detalles para este descuento. Contactar a soporte.]"
+        if show.other_data and 'discount_details' in show.other_data:
+            discount_details = show.other_data['discount_details']
+
+        # 3. Se construye el contexto para reemplazar los placeholders
+        context = self._build_context(
+            user=user,
+            show=show,
+            discount_code=discount_code,
+            discount_details=discount_details, # <-- Se inyectan los detalles específicos
+            expiry_date=(datetime.now() + timedelta(days=7)).strftime('%d/%m/%Y')
+        )
         
-        subject = f"✅ Descuento Aprobado - {show.title}"
-        
-        content = f"""Estimado/a {user.name},
-
-¡Excelente noticia! Su solicitud de descuento ha sido APROBADA.
-
-🎫 DETALLES DEL SHOW:
-• Show: {show.title}
-• Artista: {show.artist}
-• Venue: {show.venue}
-• Fecha: {show.show_date.strftime('%d/%m/%Y')}
-
-💰 INFORMACIÓN DEL DESCUENTO:
-• Precio original: ${original_price:,}
-• Descuento: {discount_percentage}%
-• Precio final: ${discounted_price:,}
-• Código de descuento: {discount_code}
-
-📧 INSTRUCCIONES:
-1. Presente este email en la boletería
-2. Mencione el código: {discount_code}
-3. Válido hasta: {(datetime.now() + timedelta(days=7)).strftime('%d/%m/%Y')}
-
-Disfrute del show!
-
-Saludos cordiales,
-Equipo IndieHOY
-
----
-Este descuento es personal e intransferible.
-Un descuento por persona por show."""
+        subject = self._replace_placeholders(template["subject"], context)
+        content = self._replace_placeholders(template["body"], context)
 
         return {
             "email_subject": subject,
@@ -72,175 +128,33 @@ Un descuento por persona por show."""
             "decision_type": "approved",
             "show_id": show.id,
             "confidence_score": 1.0,
-            "reasoning": reasoning or f"Show disponible con {show.get_remaining_discounts(self.db)} descuentos restantes",
+            "reasoning": reasoning or f"Discount details extracted from show data.",
             "discount_code": discount_code,
-            "discount_percentage": discount_percentage,
-            "original_price": original_price,
-            "discounted_price": discounted_price
+            "discount_percentage": None, # Ya no lo calculamos aquí
         }
-    
+
     def generate_rejection_email(self, user_name: str, user_email: str, reason_code: str, show_info: str = "") -> Dict[str, Any]:
         """
-        ❌ Generate rejection email with specific reason
+        ❌ Generate rejection email using a database template based on the reason code.
         """
+        template_name = f"rejection_{reason_code}"
+        template = self._get_template(template_name)
         
-        reasons = {
-            "user_not_found": {
-                "subject": "❌ Usuario no registrado",
-                "content": f"""Estimado/a {user_name},
-
-Lamentamos informarle que no pudimos procesar su solicitud de descuento.
-
-❌ MOTIVO DEL RECHAZO:
-Su email ({user_email}) no se encuentra registrado en nuestra base de datos de suscriptores.
-
-✅ SOLUCIÓN:
-1. Verifique que está usando el email correcto
-2. Complete su registro en nuestra plataforma
-3. Asegúrese de tener una suscripción activa
-
-Para registrarse o consultas, contáctenos a info@indiehoy.com
-
-Saludos cordiales,
-Equipo IndieHOY"""
-            },
-            "payment_overdue": {
-                "subject": "❌ Pagos pendientes",
-                "content": f"""Estimado/a {user_name},
-
-Lamentamos informarle que no pudimos procesar su solicitud de descuento.
-
-❌ MOTIVO DEL RECHAZO:
-Su cuenta tiene pagos pendientes que deben ser regularizados.
-
-✅ SOLUCIÓN:
-1. Regularice sus pagos pendientes
-2. Una vez al día con los pagos, podrá solicitar descuentos nuevamente
-
-Para consultas sobre pagos, contáctenos a pagos@indiehoy.com
-
-Saludos cordiales,
-Equipo IndieHOY"""
-            },
-            "subscription_inactive": {
-                "subject": "❌ Suscripción inactiva",
-                "content": f"""Estimado/a {user_name},
-
-Lamentamos informarle que no pudimos procesar su solicitud de descuento.
-
-❌ MOTIVO DEL RECHAZO:
-Su suscripción se encuentra inactiva.
-
-✅ SOLUCIÓN:
-1. Active su suscripción
-2. Una vez activa, podrá solicitar descuentos
-
-Para reactivar su suscripción, contáctenos a suscripciones@indiehoy.com
-
-Saludos cordiales,
-Equipo IndieHOY"""
-            },
-            "no_discounts_available": {
-                "subject": "❌ Sin descuentos disponibles",
-                "content": f"""Estimado/a {user_name},
-
-Lamentamos informarle que no hay descuentos disponibles para el show solicitado.
-
-🎭 SHOW SOLICITADO:
-{show_info}
-
-❌ MOTIVO DEL RECHAZO:
-Los descuentos para este show se han agotado.
-
-✅ RECOMENDACIONES:
-• Esté atento a nuestras próximas promociones
-• Suscríbase a nuestras notificaciones para enterarse primero
-
-Saludos cordiales,
-Equipo IndieHOY"""
-            },
-            "duplicate_request": {
-                "subject": "❌ Solicitud duplicada",
-                "content": f"""Estimado/a {user_name},
-
-Ya ha solicitado un descuento para este show recientemente.
-
-🎭 SHOW:
-{show_info}
-
-❌ MOTIVO DEL RECHAZO:
-Solo se permite una solicitud de descuento por persona por show.
-
-✅ INFORMACIÓN:
-Revise su email para la respuesta de su solicitud anterior.
-
-Saludos cordiales,
-Equipo IndieHOY"""
-            }
-        }
+        context = self._build_context(
+            user_name=user_name,
+            user_email=user_email,
+            show_description=show_info
+        )
         
-        template = reasons.get(reason_code, reasons["user_not_found"])
-        
-        return {
-            "email_subject": template["subject"],
-            "email_content": template["content"],
-            "decision_type": "rejected",
-            "show_id": None,
-            "confidence_score": 1.0,
-            "reasoning": f"Rechazo automático: {reason_code}",
-            "rejection_reason": reason_code
-        }
-    
-    def generate_clarification_email(self, user_name: str, user_email: str, available_shows: list, user_query: str) -> Dict[str, Any]:
-        """
-        ❓ Generate clarification email when multiple shows match
-        """
-        subject = "❓ Aclaración necesaria - Seleccione su show"
-        
-        shows_list = ""
-        for i, show in enumerate(available_shows, 1):
-            price = show.other_data.get('price', 'N/A') if show.other_data else 'N/A'
-            remaining = show.get_remaining_discounts(self.db)
-            shows_list += f"""
-{i}. {show.title} - {show.artist}
-   📍 Venue: {show.venue}
-   📅 Fecha: {show.show_date.strftime('%d/%m/%Y')}
-   💰 Precio: ${price}
-   🎫 Descuentos disponibles: {remaining}
-"""
-        
-        content = f"""Estimado/a {user_name},
-
-Recibimos su solicitud de descuento, pero necesitamos una aclaración.
-
-🔍 USTED SOLICITÓ:
-"{user_query}"
-
-❓ PROBLEMA:
-Encontramos múltiples shows que coinciden con su búsqueda.
-
-🎭 SHOWS DISPONIBLES CON DESCUENTOS:
-{shows_list}
-
-✅ PRÓXIMOS PASOS:
-1. Responda este email indicando el número del show que desea
-2. O visite nuestro formulario web para seleccionar directamente
-3. Procesaremos su solicitud inmediatamente
-
-🔗 Formulario web: http://localhost:8000/request
-
-Saludos cordiales,
-Equipo IndieHOY
-
----
-Este email es generado automáticamente por nuestro sistema."""
+        subject = self._replace_placeholders(template["subject"], context)
+        content = self._replace_placeholders(template["body"], context)
 
         return {
             "email_subject": subject,
             "email_content": content,
-            "decision_type": "needs_clarification",
+            "decision_type": "rejected",
             "show_id": None,
-            "confidence_score": 0.8,
-            "reasoning": f"Múltiples shows encontrados para: {user_query}",
-            "available_shows": [show.id for show in available_shows]
+            "confidence_score": 1.0,
+            "reasoning": f"Automatic rejection: {reason_code}",
+            "rejection_reason": reason_code
         } 

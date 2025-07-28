@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.services.discount_prefilter import DiscountPreFilter, PreFilterResult
 from app.services.intelligent_matcher import IntelligentShowMatcher, MatchingResult
-from app.services.email_service import EmailTemplateEngine
+from app.services.template_email_service import TemplateEmailService
 from app.services.decision_logger import DecisionLogger
 from app.services.supervision_queue_service import SupervisionQueueService
 
@@ -37,7 +37,7 @@ class DiscountDecisionService:
         self.db = db_session
         self.prefilter = DiscountPreFilter(db_session)
         self.intelligent_matcher = IntelligentShowMatcher(db_session)  # Pass DB session
-        self.email_engine = EmailTemplateEngine()
+        self.email_engine = TemplateEmailService(db_session)
         self.decision_logger = DecisionLogger()
         self.supervision_queue = SupervisionQueueService(db_session)
     

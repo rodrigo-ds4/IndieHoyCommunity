@@ -19,70 +19,7 @@ Generates email templates in Spanish for discount responses
 from typing import Dict, Any
 
 
-class EmailTemplateEngine:
-    """
-    📧 EMAIL TEMPLATE ENGINE - Generates emails in Spanish
-    
-    All email content generated in Spanish for consistency
-    """
-    
-    def __init__(self):
-        pass
-    
-    def generate_approval_email(self, user_data: Dict[str, Any], show_data: Dict[str, Any]) -> str:
-        """Generate approval email in Spanish"""
-        return f"""Estimado/a {user_data['name']},
-
-¡Excelente noticia! Su solicitud de descuento ha sido aprobada.
-
-DETALLES DEL SHOW:
-• Título: {show_data['title']}
-• Artista: {show_data['artist']}
-• Venue: {show_data['venue']}
-• Fecha: {show_data['show_date']}
-• Precio: ${show_data.get('price', 'N/A')}
-
-INSTRUCCIONES PARA EL DESCUENTO:
-{show_data.get('discount_instructions', 'Contacte la boletería con este código de aprobación')}
-
-Para cualquier consulta, puede contactarnos respondiendo a este email.
-
-Saludos cordiales,
-Equipo IndieHOY"""
-    
-    def generate_rejection_email(self, user_name: str, reason: str) -> str:
-        """Generate rejection email in Spanish"""
-        
-        # Map technical reasons to user-friendly Spanish messages
-        user_friendly_reasons = {
-            "no está registrado": "su email no se encuentra en nuestro sistema de suscriptores",
-            "cuotas mensuales pendientes": "tiene pagos pendientes que deben regularizarse",
-            "suscripción no está activa": "su suscripción necesita ser activada",
-            "no encontramos shows": "no hay shows disponibles que coincidan con su búsqueda",
-            "ya tiene una solicitud": "ya solicitó un descuento para este show anteriormente",
-            "descuentos agotados": "los descuentos para este show se han agotado",
-            "sin descuentos": "este show no tiene descuentos disponibles"
-        }
-        
-        friendly_reason = reason
-        for key, friendly in user_friendly_reasons.items():
-            if key in reason.lower():
-                friendly_reason = friendly
-                break
-        
-        return f"""Estimado/a {user_name},
-
-Hemos recibido su solicitud de descuento, pero lamentablemente no podemos procesarla en este momento porque {friendly_reason}.
-
-Por favor:
-• Verifique su información de cuenta
-• Asegúrese de que sus pagos estén al día
-• Contacte nuestro soporte si necesita asistencia
-
-Puede responder a este email para obtener más información.
-
-Saludos cordiales,
-Equipo IndieHOY"""
+# ELIMINADO: EmailTemplateEngine obsoleto - ahora usamos TemplateEmailService
 
 
 class EmailService:

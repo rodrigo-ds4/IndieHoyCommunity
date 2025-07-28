@@ -107,11 +107,11 @@ class SupervisionQueueService:
             return False
 
     def mark_as_sent(self, item_id: int) -> bool:
-        """Mark an approved item as sent"""
+        """Mark an approved or rejected item as sent"""
         try:
             item = self.db.query(SupervisionQueue).filter(SupervisionQueue.id == item_id).first()
-            if not item or item.status != "approved":
-                logger.error(f"❌ Item {item_id} not found or not approved")
+            if not item or item.status not in ["approved", "rejected"]:
+                logger.error(f"❌ Item {item_id} not found or not ready to send")
                 return False
             
             item.status = "sent"

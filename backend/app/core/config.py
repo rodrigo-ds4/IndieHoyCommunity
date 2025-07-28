@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     OLLAMA_TIMEOUT: int = 30
     
     # === DATABASE ===
-    DATABASE_URL: str = "sqlite:///./charro_bot.db"  # Default SQLite
+    DATABASE_URL: str = "sqlite:///./data/charro_bot.db"  # Default SQLite (mapped volume)
     # For PostgreSQL: "postgresql://user:password@localhost/dbname"
     
     # === SECURITY ===

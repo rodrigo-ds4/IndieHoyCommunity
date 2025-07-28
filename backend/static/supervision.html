@@ -19,6 +19,17 @@
         .decision-approved { @apply border-l-4 border-green-500 bg-green-50; }
         .decision-rejected { @apply border-l-4 border-red-500 bg-red-50; }
         .decision-clarification { @apply border-l-4 border-yellow-500 bg-yellow-50; }
+        
+        /* Unified Navbar Styles */
+        .tab-button.active {
+            @apply bg-indigo-50 border-indigo-200 text-indigo-700;
+        }
+        .tab-button.active i {
+            @apply text-indigo-600;
+        }
+        .tab-button:not(.active) {
+            @apply text-gray-600;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -39,8 +50,19 @@
                         <i class="fas fa-sync-alt mr-2"></i>
                         Actualizar
                     </button>
-                    <div id="stats-display" class="text-sm text-gray-600">
-                        <span id="pending-count">0</span> pendientes
+                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Salir
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <div id="stats-display" class="text-sm text-gray-600">
+                            Sistema automático activo
+                        </div>
+                        <div class="flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg border border-yellow-200">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span class="text-sm font-medium">Pendientes:</span>
+                            <span class="ml-1 px-2 py-1 text-xs font-bold bg-yellow-200 text-yellow-900 rounded-full" id="total-pending-count">0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -49,94 +71,52 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-clock text-yellow-400 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
-                                <dd class="text-lg font-medium text-gray-900" id="stat-pending">-</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Aprobados</dt>
-                                <dd class="text-lg font-medium text-gray-900" id="stat-approved">-</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Rechazados</dt>
-                                <dd class="text-lg font-medium text-gray-900" id="stat-rejected">-</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-paper-plane text-blue-400 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Enviados</dt>
-                                <dd class="text-lg font-medium text-gray-900" id="stat-sent">-</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+        <!-- Unified Navigation Bar -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 sm:px-6 py-4">
+                <nav class="flex flex-wrap gap-2 sm:gap-1" aria-label="Tabs">
+                    <button onclick="filterQueue('approved')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200 active" data-status="approved">
+                        <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                        <span class="hidden sm:inline">Aprobados</span>
+                        <span class="sm:hidden">Aprob.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full" id="count-approved">0</span>
+                    </button>
+                    <button onclick="filterQueue('rejected')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" data-status="rejected">
+                        <i class="fas fa-times-circle mr-2 text-red-500"></i>
+                        <span class="hidden sm:inline">Rechazados</span>
+                        <span class="sm:hidden">Rech.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full" id="count-rejected">0</span>
+                    </button>
+                    <button onclick="filterQueue('sent')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" data-status="sent">
+                        <i class="fas fa-paper-plane mr-2 text-blue-500"></i>
+                        <span class="hidden sm:inline">Enviados</span>
+                        <span class="sm:hidden">Env.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full" id="count-sent">0</span>
+                    </button>
+                </nav>
             </div>
         </div>
 
-        <!-- Filter Tabs -->
-        <div class="bg-white shadow rounded-lg mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                    <button onclick="filterQueue('pending')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-status="pending">
-                        <i class="fas fa-clock mr-2"></i>
-                        Pendientes
+        <!-- Bulk Actions (solo visible en aprobados) -->
+        <div id="bulk-actions" class="bg-white shadow rounded-lg mb-6 p-4 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="selectAllEmails()" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        <i class="fas fa-check-square mr-1"></i>
+                        Seleccionar todos
                     </button>
-                    <button onclick="filterQueue('approved')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="approved">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        Aprobados
+                    <button onclick="deselectAllEmails()" class="text-sm text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-square mr-1"></i>
+                        Deseleccionar todos
                     </button>
-                    <button onclick="filterQueue('rejected')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="rejected">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Rechazados
-                    </button>
-                    <button onclick="filterQueue('sent')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-status="sent">
+                    <span id="selected-count" class="text-sm text-gray-500">0 seleccionados</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="sendSelectedEmails()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                         <i class="fas fa-paper-plane mr-2"></i>
-                        Enviados
+                        Enviar Seleccionados
                     </button>
-                </nav>
+                </div>
             </div>
         </div>
 
@@ -174,6 +154,13 @@
                     <input type="text" id="edit-reviewer-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tu nombre" value="Supervisor">
                 </div>
                 
+                <div class="mb-4" id="edit-status-field">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado:</label>
+                    <select id="edit-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <!-- Options will be populated dynamically based on current status -->
+                    </select>
+                </div>
+                
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Asunto del Email:</label>
                     <input type="text" id="edit-email-subject" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -197,21 +184,36 @@
                         <i class="fas fa-save mr-1"></i>
                         Guardar Cambios
                     </button>
-                    <button onclick="saveAndApprove()" class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        <i class="fas fa-check mr-1"></i>
-                        Guardar y Aprobar
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentFilter = 'pending';
+        let currentFilter = 'approved';
         let currentEditItemId = null;
 
         // API Base URL
         const API_BASE = '/api/v1/supervision';
+
+        // 🔐 Verificar autenticación al cargar la página
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/v1/auth/verify');
+                if (!response.ok) {
+                    // Redirigir al login si no está autenticado
+                    window.location.href = '/static/login.html';
+                    return false;
+                }
+                const data = await response.json();
+                console.log('✅ Usuario autenticado:', data.username);
+                return true;
+            } catch (error) {
+                console.error('❌ Error verificando autenticación:', error);
+                window.location.href = '/static/login.html';
+                return false;
+            }
+        }
 
         async function loadStats() {
             try {
@@ -219,11 +221,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    document.getElementById('stat-pending').textContent = data.stats.pending;
-                    document.getElementById('stat-approved').textContent = data.stats.approved;
-                    document.getElementById('stat-rejected').textContent = data.stats.rejected;
-                    document.getElementById('stat-sent').textContent = data.stats.sent;
-                    document.getElementById('pending-count').textContent = data.stats.pending;
+                    // Update unified navbar counters
+                    document.getElementById('count-approved').textContent = data.stats.approved;
+                    document.getElementById('count-rejected').textContent = data.stats.rejected;
+                    document.getElementById('count-sent').textContent = data.stats.sent;
+                    
+                    // Update total pending counter (approved + rejected)
+                    const totalPending = data.stats.approved + data.stats.rejected;
+                    document.getElementById('total-pending-count').textContent = totalPending;
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -271,7 +276,7 @@
                                     ${getDecisionText(item.decision_type)}
                                 </span>
                                 <span class="text-xs text-gray-500">
-                                    ${item.decision_source === 'prefilter_template' ? '⚡ PreFilter' : '🤖 LLM'}
+                                    ⚡ Sistema Automático
                                 </span>
                             </div>
                             <h3 class="text-lg font-medium text-gray-900 mb-1">${item.email_subject}</h3>
@@ -279,7 +284,7 @@
                                 <i class="fas fa-user mr-1"></i> ${item.user_name} (${item.user_email})
                             </p>
                             <p class="text-sm text-gray-600 mb-2">
-                                <i class="fas fa-search mr-1"></i> Búsqueda: "${item.show_description}"
+                                <i class="fas fa-calendar mr-1"></i> Evento: "${item.show_description}"
                             </p>
                             <p class="text-xs text-gray-500">
                                 <i class="fas fa-clock mr-1"></i> ${formatDateTime(item.created_at)}
@@ -287,34 +292,48 @@
                                 • Tiempo: ${item.processing_time}s
                             </p>
                         </div>
-                        ${item.status === 'pending' ? `
-                            <div class="flex space-x-2 ml-4">
-                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <div class="flex items-center space-x-2 ml-4">
+                            <!-- Botones según estado -->
+                            ${item.status === 'pending' ? `
+                                <button onclick="editEmailWithStatus(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                     <i class="fas fa-edit mr-1"></i>
                                     Editar
                                 </button>
-                                <button onclick="approveItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <button onclick="approveItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                                     <i class="fas fa-check mr-1"></i>
                                     Aprobar
                                 </button>
-                                <button onclick="rejectItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <button onclick="rejectItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                                     <i class="fas fa-times mr-1"></i>
                                     Rechazar
                                 </button>
-                            </div>
-                        ` : item.status === 'approved' ? `
-                            <div class="ml-4">
-                                <button onclick="markAsSent(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <i class="fas fa-paper-plane mr-1"></i>
-                                    Marcar Enviado
+                            ` : item.status === 'approved' ? `
+                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Confirmar y Enviar MAIL
                                 </button>
-                            </div>
-                        ` : ''}
+                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                            ` : item.status === 'rejected' ? `
+                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    Confirmar y Enviar MAIL
+                                </button>
+                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                     
                     <!-- Email Content Preview -->
                     <div class="border-t pt-4">
-                        <details class="cursor-pointer">
+                        <details class="cursor-pointer" open>
                             <summary class="text-sm font-medium text-gray-700 hover:text-gray-900">
                                 <i class="fas fa-envelope mr-1"></i>
                                 Ver contenido del email
@@ -412,38 +431,16 @@
             }
             
             try {
-                // This would be a new endpoint to update email content
-                // For now, we'll show a success message
-                alert('✅ Cambios guardados exitosamente');
-                closeEditModal();
-                refreshQueue();
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error guardando cambios. Intenta nuevamente.');
-            }
-        }
-
-        // 💾✅ Guardar y aprobar
-        async function saveAndApprove() {
-            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
-            const notes = document.getElementById('edit-supervisor-notes').value.trim();
-            
-            if (!currentEditItemId) return;
-            
-            try {
-                // First save the email edits (if needed)
-                await saveEmailEdit();
-                
-                // Then approve
-                const response = await fetch(`${API_BASE}/queue/${currentEditItemId}/action`, {
-                    method: 'POST',
+                const response = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        action: 'approve',
+                        email_subject: subject,
+                        email_content: content,
                         reviewer: reviewer,
-                        notes: notes || 'Aprobado con ediciones'
+                        notes: notes
                     })
                 });
                 
@@ -452,20 +449,21 @@
                 if (data.success) {
                     closeEditModal();
                     refreshQueue();
-                    alert(`✅ Email editado y solicitud aprobada por ${reviewer}`);
+                    // Sin alert molesto
                 } else {
-                    alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
+                    alert(`Error: ${data.detail || 'No se pudo guardar'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión. Intenta nuevamente.');
+                alert('Error guardando cambios. Intenta nuevamente.');
             }
         }
 
+        // ELIMINADO: función saveAndApprove - ya no se usa
+
         // ✅ Aprobar directamente (sin modal de confirmación)
         async function approveItem(itemId) {
-            const reviewer = prompt('Tu nombre como supervisor:', 'Supervisor');
-            if (!reviewer) return;
+            const reviewer = 'Supervisor'; // Hardcoded por ahora
             
             try {
                 const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
@@ -484,7 +482,7 @@
                 
                 if (data.success) {
                     refreshQueue();
-                    alert(`✅ Solicitud aprobada por ${reviewer}`);
+                    // Sin alert molesto - solo actualizar la vista
                 } else {
                     alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
                 }
@@ -496,8 +494,7 @@
 
         // ❌ Rechazar directamente (sin modal de confirmación)
         async function rejectItem(itemId) {
-            const reviewer = prompt('Tu nombre como supervisor:', 'Supervisor');
-            if (!reviewer) return;
+            const reviewer = 'Supervisor'; // Hardcoded por ahora
             
             const notes = prompt('Razón del rechazo (obligatorio):');
             if (!notes) {
@@ -522,7 +519,7 @@
                 
                 if (data.success) {
                     refreshQueue();
-                    alert(`❌ Solicitud rechazada por ${reviewer}`);
+                    // Sin alert molesto - solo actualizar la vista
                 } else {
                     alert(`Error: ${data.detail || 'No se pudo procesar el rechazo'}`);
                 }
@@ -534,29 +531,7 @@
 
 
 
-        async function markAsSent(itemId) {
-            if (!confirm('¿Confirmas que el email fue enviado?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}/send`, {
-                    method: 'POST'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    refreshQueue();
-                    alert('Marcado como enviado exitosamente');
-                } else {
-                    alert(`Error: ${data.detail || 'No se pudo marcar como enviado'}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión. Intenta nuevamente.');
-            }
-        }
+
 
         function refreshQueue() {
             loadStats();
@@ -604,10 +579,280 @@
             });
         }
 
+        // 🔄 Cambiar estado de un item
+        async function changeStatus(itemId, newStatus) {
+            const reviewer = 'Supervisor';
+            const notes = newStatus === 'rejected' ? prompt('Razón del rechazo:') : 'Cambio de estado';
+            
+            if (newStatus === 'rejected' && !notes) {
+                alert('Las notas son obligatorias para rechazar');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: newStatus === 'approved' ? 'approve' : 'reject',
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    refreshQueue();
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo cambiar el estado'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 📧 Enviar email individual
+        async function sendEmail(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/send`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    refreshQueue();
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo enviar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // ✏️ Editar email con posibilidad de cambiar estado (para pendientes)
+        async function editEmailWithStatus(itemId) {
+            editEmail(itemId);
+            // El campo de estado ya está visible en el modal
+        }
+
+        // 📋 Funciones de selección múltiple
+        function selectAllEmails() {
+            document.querySelectorAll('.email-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            updateSelectedCount();
+        }
+
+        function deselectAllEmails() {
+            document.querySelectorAll('.email-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const selected = document.querySelectorAll('.email-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = `${selected} seleccionados`;
+        }
+
+        // 📧 Enviar emails seleccionados
+        async function sendSelectedEmails() {
+            const selectedIds = Array.from(document.querySelectorAll('.email-checkbox:checked'))
+                .map(cb => cb.dataset.id);
+            
+            if (selectedIds.length === 0) {
+                alert('Selecciona al menos un email');
+                return;
+            }
+            
+            if (!confirm(`¿Enviar ${selectedIds.length} emails?`)) return;
+            
+            for (const id of selectedIds) {
+                await sendEmail(id);
+            }
+            
+            refreshQueue();
+        }
+
+        // 🔄 Actualizar función de filtrado para mostrar/ocultar bulk actions
+        function filterQueue(status) {
+            currentFilter = status;
+            
+            // Mostrar bulk actions en aprobados y rechazados
+            const bulkActions = document.getElementById('bulk-actions');
+            if (status === 'approved' || status === 'rejected') {
+                bulkActions.classList.remove('hidden');
+                
+                // Cambiar el texto del botón según el status
+                const sendButton = bulkActions.querySelector('button[onclick="sendSelectedEmails()"]');
+                if (sendButton) {
+                    if (status === 'approved') {
+                        sendButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar y Enviar Seleccionados';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700';
+                    } else if (status === 'rejected') {
+                        sendButton.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Confirmar y Enviar Rechazos';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700';
+                    }
+                }
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            const activeTab = document.querySelector(`[data-status="${status}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('border-transparent', 'text-gray-500');
+                activeTab.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+            
+            loadQueue(status);
+        }
+
+        // 💾 Actualizar función de guardar para incluir estado
+        async function saveEmailEdit() {
+            if (!currentEditItemId) return;
+            
+            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
+            const subject = document.getElementById('edit-email-subject').value.trim();
+            const content = document.getElementById('edit-email-content').value.trim();
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            const newStatus = document.getElementById('edit-status').value;
+            
+            if (!content) {
+                alert('El contenido del email es obligatorio');
+                return;
+            }
+            
+            try {
+                // Primero actualizar el contenido
+                const editResponse = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email_subject: subject,
+                        email_content: content,
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const editData = await editResponse.json();
+                if (!editData.success) {
+                    alert(`Error: ${editData.detail || 'No se pudo guardar'}`);
+                    return;
+                }
+                
+                // Si cambió el estado, hacer la acción correspondiente
+                const currentItem = await getCurrentItemStatus(currentEditItemId);
+                if (currentItem && currentItem.status !== newStatus) {
+                    await changeStatus(currentEditItemId, newStatus);
+                }
+                
+                closeEditModal();
+                refreshQueue();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 🔍 Obtener estado actual de un item
+        async function getCurrentItemStatus(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                return data.success ? data.item : null;
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
+            }
+        }
+
+        // 📧 Actualizar función de editar para llenar el estado
+        async function editEmail(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const item = data.item;
+                    currentEditItemId = itemId;
+                    
+                    // Llenar campos
+                    document.getElementById('edit-email-subject').value = item.email_subject || '';
+                    document.getElementById('edit-email-content').value = item.email_content || '';
+                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
+                    
+                    // Populate status options dynamically (never allow going back to pending)
+                    const statusSelect = document.getElementById('edit-status');
+                    statusSelect.innerHTML = '';
+                    
+                    if (item.status === 'pending') {
+                        statusSelect.innerHTML = `
+                            <option value="pending">⏳ Pendiente</option>
+                            <option value="approved">✅ Aprobado</option>
+                            <option value="rejected">❌ Rechazado</option>
+                        `;
+                    } else if (item.status === 'approved') {
+                        statusSelect.innerHTML = `
+                            <option value="approved">✅ Aprobado</option>
+                            <option value="rejected">❌ Rechazado</option>
+                        `;
+                    } else if (item.status === 'rejected') {
+                        statusSelect.innerHTML = `
+                            <option value="rejected">❌ Rechazado</option>
+                            <option value="approved">✅ Aprobado</option>
+                        `;
+                    }
+                    
+                    statusSelect.value = item.status;
+                    
+                    // Mostrar modal
+                    document.getElementById('edit-email-modal').classList.remove('hidden');
+                } else {
+                    alert('Error loading item details');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 🔄 Agregar listener para checkboxes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('email-checkbox')) {
+                updateSelectedCount();
+            }
+        });
+
+        // 🚪 Función de logout
+        async function logout() {
+            try {
+                await fetch('/api/v1/auth/logout', { method: 'POST' });
+                window.location.href = '/static/login.html';
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                // Redirigir de todos modos
+                window.location.href = '/static/login.html';
+            }
+        }
+
         // Initialize page
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar autenticación primero
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) return;
+            
+            // Cargar dashboard si está autenticado
             loadStats();
-            loadQueue('pending');
+            loadQueue('approved'); // Cambié de 'pending' a 'approved' según el flujo actual
             
             // Auto-refresh every 30 seconds
             setInterval(refreshQueue, 30000);

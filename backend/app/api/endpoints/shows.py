@@ -35,18 +35,19 @@ async def search_shows(
         results = []
         for show in shows:
             remaining_discounts = show.get_remaining_discounts(db)
-            if remaining_discounts > 0:  # Only shows with available discounts
-                results.append({
-                    "id": show.id,
-                    "title": show.title,
-                    "artist": show.artist,
-                    "venue": show.venue,
-                    "show_date": show.show_date.strftime("%Y-%m-%d") if show.show_date else "Fecha TBD",
-                    "price": show.other_data.get("price", 0) if show.other_data else 0,
-                    "remaining_discounts": remaining_discounts,
-                    "display_text": f"{show.title} - {show.artist} - {show.venue}",
-                    "full_info": f"{show.title} por {show.artist} en {show.venue} - ${show.other_data.get('price', 'N/A')} ({remaining_discounts} descuentos disponibles)"
-                })
+            # Ya no filtramos aquí. Devolvemos todos los shows.
+            # El frontend decidirá si es seleccionable o no.
+            results.append({
+                "id": show.id,
+                "title": show.title,
+                "artist": show.artist,
+                "venue": show.venue,
+                "show_date": show.show_date.strftime("%Y-%m-%d") if show.show_date else "Fecha TBD",
+                "price": show.other_data.get("price", 0) if show.other_data else 0,
+                "remaining_discounts": remaining_discounts,
+                "display_text": f"{show.title} - {show.artist} - {show.venue}",
+                "full_info": f"{show.title} por {show.artist} en {show.venue} - ${show.other_data.get('price', 'N/A')} ({remaining_discounts} descuentos disponibles)"
+            })
         
         return {
             "success": True,

@@ -18,6 +18,12 @@ class SupervisionAction(BaseModel):
     reviewer: str
     notes: Optional[str] = None
 
+class EmailEdit(BaseModel):
+    email_subject: str
+    email_content: str
+    reviewer: str
+    notes: Optional[str] = None
+
 @router.get("/queue")
 async def get_supervision_queue(
     limit: int = Query(50, ge=1, le=100),
@@ -105,9 +111,9 @@ async def mark_as_sent(
     db: Session = Depends(get_db)
 ):
     """
-    📧 Mark approved item as sent
+    📧 Mark approved or rejected item as sent
     
-    - **item_id**: ID of the approved queue item
+    - **item_id**: ID of the queue item (approved or rejected)
     """
     try:
         supervision_service = SupervisionQueueService(db)
@@ -120,7 +126,7 @@ async def mark_as_sent(
                 "status": "sent"
             }
         else:
-            raise HTTPException(status_code=404, detail=f"Item {item_id} not found or not approved")
+            raise HTTPException(status_code=404, detail=f"Item {item_id} not found or not ready to send")
             
     except HTTPException:
         raise
@@ -174,4 +180,48 @@ async def get_queue_item(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching item: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error fetching item: {str(e)}")
+
+@router.put("/queue/{item_id}/edit")
+async def edit_email_content(
+    item_id: int,
+    edit_data: EmailEdit,
+    db: Session = Depends(get_db)
+):
+    """
+    ✏️ Edit email content for a supervision queue item
+    
+    Allows supervisors to edit the email subject and content before approval.
+    """
+    try:
+        from app.models.database import SupervisionQueue
+        from datetime import datetime
+        
+        # Get the item
+        item = db.query(SupervisionQueue).filter(SupervisionQueue.id == item_id).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        
+        # Allow editing of pending, approved, and rejected items (not sent)
+        if item.status == "sent":
+            raise HTTPException(status_code=400, detail="Cannot edit items that have already been sent")
+        
+        # Update the email content
+        item.email_subject = edit_data.email_subject
+        item.email_content = edit_data.email_content
+        item.supervisor_notes = edit_data.notes
+        item.reviewed_by = edit_data.reviewer
+        item.reviewed_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Email content updated by {edit_data.reviewer}",
+            "item": item.to_dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating email: {str(e)}") 

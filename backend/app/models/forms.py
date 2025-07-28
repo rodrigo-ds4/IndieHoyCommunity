@@ -3,7 +3,7 @@ Form Models (Pydantic Schemas)
 Request/response validation models for web forms
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
@@ -13,19 +13,29 @@ class DiscountRequest(BaseModel):
     Model for discount requests through web form
     """
     user_name: str = Field(..., min_length=2, max_length=100)
-    user_email: str = Field(..., pattern=r'^[^@]+@[^@]+\.[^@]+$')
-    show_description: str = Field(..., min_length=5, max_length=200, description="Show/artist description (free text)")
-    user_history: Optional[Dict[str, Any]] = None
+    user_email: EmailStr
+    show_id: int = Field(..., gt=0, description="The unique ID of the show being requested")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "user_name": "Juan Pérez",
                 "user_email": "juan@example.com", 
-                "show_description": "Los Piojos en el Luna Park",
-                "user_history": {"previous_shows": 3, "loyalty_points": 150}
+                "show_id": 1,
             }
         }
+
+
+class EmailValidationRequest(BaseModel):
+    user_email: EmailStr
+    show_id: int = Field(..., gt=0, description="The unique ID of the show to check for duplicates")
+
+
+class EmailValidationResponse(BaseModel):
+    exists: bool
+    can_request: bool
+    user_name: Optional[str] = None
+    message: str
 
 
 class DiscountResponse(BaseModel):

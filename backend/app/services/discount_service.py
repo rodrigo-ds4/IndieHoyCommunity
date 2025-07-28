@@ -44,10 +44,10 @@ class DiscountService:
             "request_id": f"req_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
             "user_email": request.user_email,
             "user_name": request.user_name,
-            "show_description": request.show_description
+            "show_id": request.show_id
         }
         
-        # 3. SimpleDiscountService processes the request (PreFilter + FuzzyMatching + Templates + SupervisionQueue)
+        # 3. SimpleDiscountService processes the request (PreFilter + Direct ID Match + Templates + SupervisionQueue)
         agent_result = await self.agent_service.process_discount_request(request_data)
         
         # 4. Return response based on SimpleDiscountService result  

@@ -5,8 +5,12 @@ SQLAlchemy models for users, shows, discounts and tracking
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from datetime import datetime
+
+# Importar SupervisionQueue para poder usarlo en la consulta
+# ELIMINADO: from .database import SupervisionQueue
+
 
 Base = declarative_base()
 
@@ -69,13 +73,23 @@ class Show(Base):
     supervision_items = relationship("SupervisionQueue", back_populates="show")
     
     # Method to calculate remaining discounts
-    def get_remaining_discounts(self, db_session):
-        """Calculate remaining discounts for this show"""
-        sent_count = db_session.query(DiscountRequest).filter(
-            DiscountRequest.show_id == self.id,
-            DiscountRequest.human_approved == True
+    def get_remaining_discounts(self, db_session: Session):
+        """
+        Calcula los descuentos restantes de forma robusta.
+        Un descuento se considera 'reservado' (no disponible) si está en la cola de supervisión
+        con estado 'pending', 'approved', o 'sent'.
+        Si un supervisor lo rechaza, el cupo se libera automáticamente.
+        """
+        # AÑADIDO: Importamos aquí para evitar la importación circular
+        from .database import SupervisionQueue
+
+        # Contar todas las solicitudes que 'reservan' un cupo y no están rechazadas.
+        reserved_count = db_session.query(SupervisionQueue).filter(
+            SupervisionQueue.show_id == self.id,
+            SupervisionQueue.status.in_(['pending', 'approved', 'sent'])
         ).count()
-        return self.max_discounts - sent_count
+        
+        return self.max_discounts - reserved_count
 
 
 class DiscountRequest(Base):
@@ -185,4 +199,22 @@ class PaymentHistory(Base):
     created_at = Column(DateTime, default=datetime.now)
     
     # Relationships
-    user = relationship("User", back_populates="payment_history") 
+    user = relationship("User", back_populates="payment_history")
+
+
+class EmailTemplate(Base):
+    """
+    Stores email templates that can be managed from a database.
+    This allows for easy updates to email content without code changes.
+    """
+    __tablename__ = "email_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_name = Column(String(100), unique=True, nullable=False, index=True)
+    subject = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self):
+        return f"<EmailTemplate(name='{self.template_name}')>" 

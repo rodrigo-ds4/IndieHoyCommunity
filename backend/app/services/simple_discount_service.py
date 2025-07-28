@@ -7,9 +7,10 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
-from fuzzywuzzy import fuzz
+# Ya no necesitamos fuzzywuzzy
+# from fuzzywuzzy import fuzz
 
-from app.models.database import User, Show, DiscountRequest
+from app.models.database import User, Show, SupervisionQueue
 from app.services.template_email_service import TemplateEmailService
 from app.services.supervision_queue_service import SupervisionQueueService
 
@@ -38,32 +39,38 @@ class SimpleDiscountService:
     
     async def process_discount_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        🎯 Main processing flow - Simple and deterministic
+        🎯 Flujo de procesamiento principal - Simplificado para usar show_id directamente.
         """
         start_time = time.time()
         
         try:
-            # 1. 🔒 PreFilter: User validations
+            # 1. 🔒 PreFilter: Validaciones de usuario
             prefilter_result = self._run_prefilter_validations(request_data)
             if prefilter_result["should_reject"]:
-                return await self._handle_prefilter_rejection(request_data, prefilter_result, start_time)
+                # Agregamos show_info para el template de email
+                request_data['show_info'] = f"Show ID: {request_data.get('show_id')}"
+                return await self._handle_rejection(request_data, prefilter_result["reason_code"], start_time)
             
-            # 2. 🔍 Show matching: Simple fuzzy matching
-            show_match_result = self._find_matching_shows(request_data["show_description"])
+            # 2. 🎯 Búsqueda directa y validación del show por ID
+            show_id = request_data.get("show_id")
+            show = self.db.query(Show).get(show_id)
+
+            # Validar si el show existe y está disponible
+            if not show or not show.active:
+                return await self._handle_rejection(request_data, "show_not_found", start_time)
             
-            if show_match_result["match_type"] == "single_match":
-                return await self._handle_approval(request_data, show_match_result["show"], prefilter_result["user"], start_time)
-            elif show_match_result["match_type"] == "multiple_matches":
-                return await self._handle_clarification(request_data, show_match_result["shows"], start_time)
-            else:  # no_match
-                return await self._handle_no_show_found(request_data, start_time)
+            if show.get_remaining_discounts(self.db) <= 0:
+                return await self._handle_no_discounts_available(request_data, show, start_time)
+
+            # 3. ✅ Aprobación
+            return await self._handle_approval(request_data, show, prefilter_result["user"], start_time)
         
         except Exception as e:
             return await self._handle_error(request_data, str(e), start_time)
     
     def _run_prefilter_validations(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        🔒 PreFilter: Fast user-centric validations
+        🔒 PreFilter: Validaciones rápidas centradas en el usuario.
         """
         user_email = request_data["user_email"]
         user_name = request_data["user_name"]
@@ -93,14 +100,16 @@ class SimpleDiscountService:
                 "user": user
             }
         
-        # 4. Check for recent duplicate requests (last 24 hours)
-        recent_cutoff = datetime.now() - timedelta(hours=24)
-        recent_request = self.db.query(DiscountRequest).filter(
-            DiscountRequest.user_id == user.id,
-            DiscountRequest.request_date > recent_cutoff
+        # 4. Check for duplicate requests CORRECTLY in the supervision queue.
+        #    A duplicate is a request for the same show and user that has not been rejected.
+        show_id = request_data.get("show_id")
+        existing_request = self.db.query(SupervisionQueue).filter(
+            SupervisionQueue.user_email == user_email,
+            SupervisionQueue.show_id == show_id,
+            SupervisionQueue.status.in_(['pending', 'approved', 'sent'])
         ).first()
         
-        if recent_request:
+        if existing_request:
             return {
                 "should_reject": True,
                 "reason_code": "duplicate_request",
@@ -113,55 +122,47 @@ class SimpleDiscountService:
             "user": user
         }
     
-    def _find_matching_shows(self, show_description: str) -> Dict[str, Any]:
+    # ELIMINADO: Ya no necesitamos el método _find_matching_shows
+    # ELIMINADO: Ya no necesitamos el método _handle_clarification
+    # ELIMINADO: Ya no necesitamos el método _handle_no_show_found
+
+    async def _handle_rejection(self, request_data: Dict[str, Any], reason_code: str, start_time: float) -> Dict[str, Any]:
         """
-        🔍 Simple fuzzy matching for shows (no LLM needed)
+        ❌ Maneja rechazos genéricos con templates de email.
         """
-        # Get all active shows with available discounts
-        all_shows = self.db.query(Show).filter(Show.active == True).all()
-        available_shows = [
-            show for show in all_shows 
-            if show.get_remaining_discounts(self.db) > 0
-        ]
+        processing_time = time.time() - start_time
         
-        if not available_shows:
-            return {"match_type": "no_match", "shows": []}
+        show_id = request_data.get("show_id")
+        show = self.db.query(Show).get(show_id) if show_id else None
+        show_info = f"{show.title}" if show else f"Show ID {show_id}"
+
+        email_data = self.email_service.generate_rejection_email(
+            user_name=request_data["user_name"],
+            user_email=request_data["user_email"],
+            reason_code=reason_code,
+            show_info=show_info
+        )
         
-        # Calculate similarity scores
-        matches = []
-        for show in available_shows:
-            # Create searchable text combining title, artist, venue
-            searchable_text = f"{show.title} {show.artist} {show.venue}".lower()
-            description_lower = show_description.lower()
-            
-            # Calculate fuzzy similarity
-            similarity = fuzz.partial_ratio(description_lower, searchable_text)
-            
-            if similarity >= 70:  # Threshold for match
-                matches.append({
-                    "show": show,
-                    "similarity": similarity
-                })
+        queue_data = {
+            "request_id": request_data["request_id"],
+            "user_email": request_data["user_email"],
+            "user_name": request_data["user_name"],
+            "show_description": show_info,
+            "decision_source": "prefilter_rejection",
+            "processing_time": processing_time,
+            **email_data
+        }
         
-        # Sort by similarity (highest first)
-        matches.sort(key=lambda x: x["similarity"], reverse=True)
+        queue_item = self.supervision_queue.add_to_queue(queue_data)
         
-        if len(matches) == 0:
-            return {"match_type": "no_match", "shows": []}
-        elif len(matches) == 1:
-            return {"match_type": "single_match", "show": matches[0]["show"]}
-        else:
-            # Check if top match is significantly better than others
-            top_score = matches[0]["similarity"]
-            second_score = matches[1]["similarity"] if len(matches) > 1 else 0
-            
-            if top_score >= 90 and (top_score - second_score) >= 15:
-                # Clear winner
-                return {"match_type": "single_match", "show": matches[0]["show"]}
-            else:
-                # Multiple good matches, need clarification
-                return {"match_type": "multiple_matches", "shows": [m["show"] for m in matches[:5]]}
-    
+        return {
+            "decision": "rejected",
+            "reasoning": email_data["reasoning"],
+            "queue_id": queue_item.id,
+            "status": "queued_for_supervision",
+            "processing_time": processing_time
+        }
+
     async def _handle_prefilter_rejection(self, request_data: Dict[str, Any], prefilter_result: Dict[str, Any], start_time: float) -> Dict[str, Any]:
         """
         ❌ Handle PreFilter rejections with template emails
@@ -173,7 +174,7 @@ class SimpleDiscountService:
             user_name=request_data["user_name"],
             user_email=request_data["user_email"],
             reason_code=prefilter_result["reason_code"],
-            show_info=request_data["show_description"]
+            show_info=request_data.get("show_info", "")
         )
         
         # Add to supervision queue
@@ -181,7 +182,7 @@ class SimpleDiscountService:
             "request_id": request_data["request_id"],
             "user_email": request_data["user_email"],
             "user_name": request_data["user_name"],
-            "show_description": request_data["show_description"],
+            "show_description": request_data.get("show_info", f"Show ID: {request_data.get('show_id')}"),
             "decision_source": "prefilter_template",
             "processing_time": processing_time,
             **email_data
@@ -216,7 +217,7 @@ class SimpleDiscountService:
             "request_id": request_data["request_id"],
             "user_email": request_data["user_email"],
             "user_name": request_data["user_name"],
-            "show_description": request_data["show_description"],
+            "show_description": show.title,
             "decision_source": "template_approval",
             "processing_time": processing_time,
             **email_data
@@ -228,76 +229,6 @@ class SimpleDiscountService:
             "decision": "approved",
             "reasoning": email_data["reasoning"],
             "discount_percentage": email_data["discount_percentage"],
-            "queue_id": queue_item.id,
-            "status": "queued_for_supervision",
-            "processing_time": processing_time
-        }
-    
-    async def _handle_clarification(self, request_data: Dict[str, Any], shows: List[Show], start_time: float) -> Dict[str, Any]:
-        """
-        ❓ Handle multiple matches with clarification email
-        """
-        processing_time = time.time() - start_time
-        
-        # Generate clarification email
-        email_data = self.email_service.generate_clarification_email(
-            user_name=request_data["user_name"],
-            user_email=request_data["user_email"],
-            available_shows=shows,
-            user_query=request_data["show_description"]
-        )
-        
-        # Add to supervision queue
-        queue_data = {
-            "request_id": request_data["request_id"],
-            "user_email": request_data["user_email"],
-            "user_name": request_data["user_name"],
-            "show_description": request_data["show_description"],
-            "decision_source": "template_clarification",
-            "processing_time": processing_time,
-            **email_data
-        }
-        
-        queue_item = self.supervision_queue.add_to_queue(queue_data)
-        
-        return {
-            "decision": "needs_clarification",
-            "reasoning": email_data["reasoning"],
-            "queue_id": queue_item.id,
-            "status": "queued_for_supervision",
-            "processing_time": processing_time
-        }
-    
-    async def _handle_no_show_found(self, request_data: Dict[str, Any], start_time: float) -> Dict[str, Any]:
-        """
-        🔍 Handle when no matching shows are found
-        """
-        processing_time = time.time() - start_time
-        
-        # Generate rejection email for no show found
-        email_data = self.email_service.generate_rejection_email(
-            user_name=request_data["user_name"],
-            user_email=request_data["user_email"],
-            reason_code="no_discounts_available",
-            show_info=request_data["show_description"] + " (No se encontraron shows coincidentes)"
-        )
-        
-        # Add to supervision queue
-        queue_data = {
-            "request_id": request_data["request_id"],
-            "user_email": request_data["user_email"],
-            "user_name": request_data["user_name"],
-            "show_description": request_data["show_description"],
-            "decision_source": "template_no_match",
-            "processing_time": processing_time,
-            **email_data
-        }
-        
-        queue_item = self.supervision_queue.add_to_queue(queue_data)
-        
-        return {
-            "decision": "rejected",
-            "reasoning": "No se encontraron shows que coincidan con la búsqueda",
             "queue_id": queue_item.id,
             "status": "queued_for_supervision",
             "processing_time": processing_time
@@ -324,7 +255,7 @@ class SimpleDiscountService:
             "request_id": request_data["request_id"],
             "user_email": request_data["user_email"],
             "user_name": request_data["user_name"],
-            "show_description": request_data["show_description"],
+            "show_description": show_info,
             "decision_source": "template_no_discounts",
             "processing_time": processing_time,
             "show_id": show.id,

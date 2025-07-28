@@ -24,49 +24,23 @@
     </style>
 </head>
 <body class="min-h-screen gradient-bg">
-    <!-- Header -->
-    <header class="bg-white bg-opacity-10 backdrop-blur-sm border-b border-white border-opacity-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-white">
-                        🎫 IndieHOY Descuentos
-                    </h1>
-                </div>
-                <div class="text-white text-sm">
-                    <a href="/supervision" class="hover:text-yellow-300 transition-colors">
-                        <i class="fas fa-cog mr-1"></i>
-                        Panel Admin
-                    </a>
-                </div>
-            </div>
+    <!-- Simple Dashboard Link -->
+    <div class="max-w-4xl mx-auto pt-6 px-4 sm:px-6 lg:px-8">
+        <div class="text-right mb-6">
+            <a href="/supervision" class="text-white hover:text-yellow-300 transition-colors text-sm">
+                <i class="fas fa-cog mr-1"></i>
+                Dashboard
+            </a>
         </div>
-    </header>
+    </div>
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <!-- Hero Section -->
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-white mb-4">
-                🎵 Solicita tu Descuento
+    <main class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Simple Title -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-white mb-2">
+                🎵 Solicitar Descuento
             </h2>
-            <p class="text-xl text-white text-opacity-90 mb-8">
-                Accede a descuentos exclusivos en los mejores shows. Completa el formulario y recibe la respuesta por email.
-            </p>
-            <div class="flex justify-center space-x-8 text-white text-opacity-80">
-                <div class="text-center">
-                    <div class="text-3xl mb-2">⚡</div>
-                    <div class="text-sm">Respuesta rápida</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl mb-2">🎯</div>
-                    <div class="text-sm">Shows verificados</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl mb-2">📧</div>
-                    <div class="text-sm">Notificación email</div>
-                </div>
-            </div>
         </div>
 
         <!-- Form Container -->
@@ -88,6 +62,7 @@
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                             placeholder="Ingresa tu nombre completo"
                         >
+                        <div id="name-error" class="text-red-600 text-sm mt-1 hidden">El nombre debe tener al menos 2 caracteres.</div>
                     </div>
 
                     <!-- Email Field -->
@@ -104,6 +79,7 @@
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                             placeholder="tu@email.com"
                         >
+                        <div id="email-error" class="text-red-600 text-sm mt-1 hidden">Por favor, ingresa un email válido.</div>
                     </div>
                 </div>
 
@@ -198,12 +174,17 @@
         // Initialize form
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('show_search');
-            const submitBtn = document.getElementById('submit-btn');
+            const nameInput = document.getElementById('user_name');
+            const emailInput = document.getElementById('user_email');
             
             // Enable submit button when all required fields are filled
             document.querySelectorAll('input[required]').forEach(input => {
                 input.addEventListener('input', checkFormValidity);
             });
+
+            // Add real-time validation listeners
+            nameInput.addEventListener('input', validateName);
+            emailInput.addEventListener('input', validateEmail);
             
             // Show search functionality
             searchInput.addEventListener('input', handleSearch);
@@ -221,13 +202,38 @@
             });
         });
 
+        function validateName() {
+            const nameInput = document.getElementById('user_name');
+            const nameError = document.getElementById('name-error');
+            if (nameInput.value.trim().length < 2) {
+                nameError.classList.remove('hidden');
+                return false;
+            } else {
+                nameError.classList.add('hidden');
+                return true;
+            }
+        }
+
+        function validateEmail() {
+            const emailInput = document.getElementById('user_email');
+            const emailError = document.getElementById('email-error');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailInput.value.trim())) {
+                emailError.classList.remove('hidden');
+                return false;
+            } else {
+                emailError.classList.add('hidden');
+                return true;
+            }
+        }
+
         function checkFormValidity() {
-            const name = document.getElementById('user_name').value.trim();
-            const email = document.getElementById('user_email').value.trim();
+            const isNameValid = validateName();
+            const isEmailValid = validateEmail();
             const hasSelectedShow = selectedShow !== null;
             
             const submitBtn = document.getElementById('submit-btn');
-            if (name && email && hasSelectedShow) {
+            if (isNameValid && isEmailValid && hasSelectedShow) {
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
@@ -260,11 +266,7 @@
                 const response = await fetch(`${API_BASE}/shows/search?q=${encodeURIComponent(query)}&limit=8`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    displaySearchResults(data.results);
-                } else {
-                    displaySearchResults([]);
-                }
+                displaySearchResults(data.success ? data.results : []);
             } catch (error) {
                 console.error('Search error:', error);
                 displaySearchResults([]);
@@ -273,25 +275,45 @@
 
         function displaySearchResults(results) {
             const resultsContainer = document.getElementById('search-results');
-            
-            if (results.length === 0) {
+            resultsContainer.innerHTML = ''; // Limpiar siempre los resultados anteriores
+
+            if (!results || results.length === 0) {
                 resultsContainer.innerHTML = `
                     <div class="p-4 text-center text-gray-500">
                         <i class="fas fa-search mr-2"></i>
-                        No se encontraron shows con descuentos disponibles
+                        No se encontraron shows
                     </div>
                 `;
             } else {
-                resultsContainer.innerHTML = results.map(show => `
-                    <div class="search-item p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50" onclick="selectShow(${JSON.stringify(show).replace(/"/g, '&quot;')})">
+                results.forEach(show => {
+                    const isAvailable = show.remaining_discounts > 0;
+                    
+                    const item = document.createElement('div');
+                    item.className = isAvailable
+                        ? 'search-item p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50'
+                        : 'search-item p-3 border-b border-gray-100 opacity-60 cursor-not-allowed bg-gray-50';
+                    
+                    if (isAvailable) {
+                        item.onclick = () => selectShow(show);
+                    }
+
+                    const detailsHtml = isAvailable
+                        ? `<div class="text-xs text-indigo-600 mt-1">
+                               <i class="fas fa-tag mr-1"></i>
+                               $${show.price} • ${show.remaining_discounts} descuentos disponibles
+                           </div>`
+                        : `<div class="text-xs text-red-600 font-medium mt-1">
+                               <i class="fas fa-times-circle mr-1"></i>
+                               Descuentos Agotados
+                           </div>`;
+
+                    item.innerHTML = `
                         <div class="font-medium text-gray-900">${show.title} - ${show.artist}</div>
                         <div class="text-sm text-gray-600">${show.venue} - ${show.show_date}</div>
-                        <div class="text-xs text-indigo-600 mt-1">
-                            <i class="fas fa-tag mr-1"></i>
-                            $${show.price} • ${show.remaining_discounts} descuentos disponibles
-                        </div>
-                    </div>
-                `).join('');
+                        ${detailsHtml}
+                    `;
+                    resultsContainer.appendChild(item);
+                });
             }
             
             resultsContainer.classList.remove('hidden');
@@ -343,7 +365,7 @@
             const formData = {
                 user_name: document.getElementById('user_name').value.trim(),
                 user_email: document.getElementById('user_email').value.trim(),
-                show_description: selectedShow.display_text
+                show_id: selectedShow.id // <-- CAMBIO CLAVE: Enviamos el ID numérico
             };
             
             const submitBtn = document.getElementById('submit-btn');
@@ -354,31 +376,23 @@
             submitBtn.disabled = true;
             
             try {
-                // Pre-validate email
+                // Pre-validate email and check for duplicates
                 const emailValidation = await fetch(`${API_BASE}/users/validate-email`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email: formData.user_email })
+                    body: JSON.stringify({ 
+                        user_email: formData.user_email,
+                        show_id: formData.show_id
+                    })
                 });
                 
                 const emailResult = await emailValidation.json();
                 
-                if (!emailValidation.ok) {
-                    throw new Error(emailResult.detail || 'Error validating email');
-                }
-                
-                // Check if email exists and user can proceed
-                if (!emailResult.exists) {
-                    showStatus('error', emailResult.message);
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-                
-                if (!emailResult.subscription_active || !emailResult.payment_current) {
-                    showStatus('warning', emailResult.message);
+                if (!emailValidation.ok || !emailResult.can_request) {
+                    let errorMessage = emailResult.message || 'Error de validación desconocido.';
+                    showStatus('error', errorMessage);
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
@@ -419,15 +433,39 @@
                             </button>
                         </div>
                     `);
+                    
+                    // MEJORA: Congelar el formulario después de un envío exitoso
+                    document.getElementById('user_name').disabled = true;
+                    document.getElementById('user_email').disabled = true;
+                    document.getElementById('show_search').disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Enviado';
+                    // El botón ya está deshabilitado, pero lo aseguramos
+                    submitBtn.disabled = true;
+
                 } else {
-                    showStatus('error', `Error: ${result.detail || 'No se pudo procesar la solicitud'}`);
+                    // MEJORA: Manejar errores que son objetos JSON
+                    let errorMessage = 'No se pudo procesar la solicitud';
+                    if (result.detail) {
+                        // Si 'detail' es un objeto/array, lo convertimos a texto para poder leerlo.
+                        errorMessage = typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail);
+                    }
+                    showStatus('error', `Error: ${errorMessage}`);
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
                 
             } catch (error) {
                 console.error('Processing error:', error);
-                showStatus('error', 'Error de conexión. Por favor intenta nuevamente.');
+                // MEJORA: Mostrar información detallada del error para debugging
+                let errorMessage = 'Error desconocido';
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'object') {
+                    errorMessage = JSON.stringify(error);
+                } else {
+                    errorMessage = String(error);
+                }
+                showStatus('error', `Error de conexión: ${errorMessage}`);
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
@@ -456,6 +494,11 @@
             document.getElementById('discount-form').reset();
             clearSelection();
             document.getElementById('form-status').classList.add('hidden');
+            
+            // MEJORA: Reactivar los campos del formulario
+            document.getElementById('user_name').disabled = false;
+            document.getElementById('user_email').disabled = false;
+            document.getElementById('show_search').disabled = false;
             
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.innerHTML = '<i class="fas fa-ticket-alt mr-2"></i>Solicitar Descuento';
