@@ -1,7 +1,3 @@
-Got it. I'll provide the complete, updated content for you to **replace** in your `README.md` file. It includes the architecture diagram, schemas, and all other sections, fully in English.
-
----
-
 # IndieHOY Discount System 🎫
 
 A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
@@ -19,6 +15,9 @@ A complete solution that allows users to request discounts for shows through:
 
 **Current Status:** Fully functional and production-ready
 
+Second Phase:
+-    Community chatbot based on LLama though OLLama
+-    RAG using LangChain
 ---
 
 ## System Overview
