@@ -50,20 +50,17 @@
                         <i class="fas fa-sync-alt mr-2"></i>
                         Actualizar
                     </button>
-                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <span class="text-sm text-gray-500">Sistema automático activo</span>
+                    <div class="flex items-center space-x-2 bg-orange-50 px-3 py-1 rounded-full">
+                        <i class="fas fa-clock text-orange-600"></i>
+                        <span class="text-sm font-medium text-orange-800">
+                            Pendientes: <span id="total-pending-count">5</span>
+                        </span>
+                    </div>
+                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                         <i class="fas fa-sign-out-alt mr-2"></i>
                         Salir
                     </button>
-                    <div class="flex items-center space-x-4">
-                        <div id="stats-display" class="text-sm text-gray-600">
-                            Sistema automático activo
-                        </div>
-                        <div class="flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg border border-yellow-200">
-                            <i class="fas fa-clock mr-2"></i>
-                            <span class="text-sm font-medium">Pendientes:</span>
-                            <span class="ml-1 px-2 py-1 text-xs font-bold bg-yellow-200 text-yellow-900 rounded-full" id="total-pending-count">0</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -93,41 +90,192 @@
                         <span class="sm:hidden">Env.</span>
                         <span class="ml-2 px-2 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full" id="count-sent">0</span>
                     </button>
+                    <!-- Botón para ir a gestión de usuarios -->
+                    <a href="/users-admin" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" style="text-decoration: none;">
+                        <i class="fas fa-users mr-2 text-purple-500"></i>
+                        <span class="hidden sm:inline">Usuarios</span>
+                        <span class="sm:hidden">Users</span>
+                    </a>
                 </nav>
             </div>
         </div>
 
-        <!-- Bulk Actions (solo visible en aprobados) -->
+        <!-- Filtros Avanzados -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-filter mr-2"></i>Filtros
+                    </h3>
+                    <button onclick="toggleFilters()" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        <i class="fas fa-chevron-down mr-1" id="filter-chevron"></i>
+                        <span id="filter-toggle-text">Mostrar filtros</span>
+                    </button>
+                </div>
+                
+                <div id="filters-section" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <!-- Filtro por Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-envelope mr-1"></i>Email Usuario
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-email" 
+                                placeholder="usuario@ejemplo.com"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                oninput="applyFilters()"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Fecha -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-calendar mr-1"></i>Fecha
+                            </label>
+                            <input 
+                                type="date" 
+                                id="filter-date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                onchange="applyFilters()"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Venue -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Venue
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-venue"
+                                placeholder="Nombre del venue"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                oninput="applyFilters()"
+                            >
+                        </div>
+                        
+                        <!-- Botón de limpiar filtros -->
+                        <div class="flex items-end">
+                            <button 
+                                onclick="clearFilters()" 
+                                class="w-full px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <i class="fas fa-times mr-1"></i>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
         <div id="bulk-actions" class="bg-white shadow rounded-lg mb-6 p-4 hidden">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <button onclick="selectAllEmails()" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        <i class="fas fa-check-square mr-1"></i>
-                        Seleccionar todos
-                    </button>
-                    <button onclick="deselectAllEmails()" class="text-sm text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-square mr-1"></i>
-                        Deseleccionar todos
-                    </button>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="select-all" onchange="toggleSelectAll()" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <label for="select-all" class="ml-2 text-sm font-medium text-gray-700">Seleccionar todos</label>
+                    </div>
                     <span id="selected-count" class="text-sm text-gray-500">0 seleccionados</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="sendSelectedEmails()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <button onclick="sendSelectedEmails()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled id="bulk-send-btn">
                         <i class="fas fa-paper-plane mr-2"></i>
-                        Enviar Seleccionados
+                        <span id="bulk-send-text">Confirmar y Enviar Seleccionados</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Queue Items -->
-        <div id="queue-container" class="space-y-4">
-            <!-- Items will be loaded here -->
+        <!-- Paginación Superior -->
+        <div id="pagination-container-top" class="bg-white shadow rounded-lg mb-6 px-4 py-3 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-sm text-gray-700">
+                    <span>Mostrando</span>
+                    <span id="pagination-showing-top">1-20</span>
+                    <span>de</span>
+                    <span id="pagination-total-top">0</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <!-- Página anterior -->
+                    <button 
+                        id="pagination-prev-top" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Anterior
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="pagination-numbers-top" class="flex space-x-1">
+                        <!-- Se generarán dinámicamente -->
+                    </div>
+                    
+                    <!-- Página siguiente -->
+                    <button 
+                        id="pagination-next-top" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        Siguiente
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Loading Spinner -->
-        <div id="loading" class="flex justify-center items-center py-12">
+        <div id="loading" class="flex justify-center items-center py-12 hidden">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+
+        <!-- Lista de cola -->
+        <div id="queue-container" class="space-y-6">
+            <!-- Los elementos se cargarán aquí -->
+        </div>
+
+        <!-- Paginación Inferior -->
+        <div id="pagination-container" class="bg-white shadow rounded-lg mt-6 px-4 py-3 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-sm text-gray-700">
+                    <span>Mostrando</span>
+                    <span id="pagination-showing">1-20</span>
+                    <span>de</span>
+                    <span id="pagination-total">0</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <!-- Página anterior -->
+                    <button 
+                        id="pagination-prev" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Anterior
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="pagination-numbers" class="flex space-x-1">
+                        <!-- Se generarán dinámicamente -->
+                    </div>
+                    
+                    <!-- Página siguiente -->
+                    <button 
+                        id="pagination-next" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        Siguiente
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Empty State -->
@@ -138,52 +286,19 @@
         </div>
     </main>
 
-    <!-- Edit Email Modal -->
-    <div id="edit-email-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <!-- Modal para editar -->
+    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">📧 Editar Contenido del Email</h3>
+                    <h3 class="text-lg font-medium text-gray-900">Editar Solicitud</h3>
                     <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Supervisor:</label>
-                    <input type="text" id="edit-reviewer-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tu nombre" value="Supervisor">
-                </div>
-                
-                <div class="mb-4" id="edit-status-field">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado:</label>
-                    <select id="edit-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        <!-- Options will be populated dynamically based on current status -->
-                    </select>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Asunto del Email:</label>
-                    <input type="text" id="edit-email-subject" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Contenido del Email:</label>
-                    <textarea id="edit-email-content" rows="12" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Contenido del email..."></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notas del supervisor:</label>
-                    <textarea id="edit-supervisor-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Comentarios sobre los cambios realizados..."></textarea>
-                </div>
-                
-                <div class="flex justify-end space-x-3">
-                    <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Cancelar
-                    </button>
-                    <button onclick="saveEmailEdit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <i class="fas fa-save mr-1"></i>
-                        Guardar Cambios
-                    </button>
+                <div id="edit-modal-content">
+                    <!-- El contenido se cargará dinámicamente -->
                 </div>
             </div>
         </div>
@@ -192,6 +307,13 @@
     <script>
         let currentFilter = 'approved';
         let currentEditItemId = null;
+        
+        // Variables para filtros y paginación
+        let currentPage = 1;
+        let currentPageSize = 20;
+        let currentFilters = {};
+        let totalPages = 1;
+        let totalItems = 0;
 
         // API Base URL
         const API_BASE = '/api/v1/supervision';
@@ -201,15 +323,12 @@
             try {
                 const response = await fetch('/api/v1/auth/verify');
                 if (!response.ok) {
-                    // Redirigir al login si no está autenticado
                     window.location.href = '/static/login.html';
                     return false;
                 }
-                const data = await response.json();
-                console.log('✅ Usuario autenticado:', data.username);
                 return true;
             } catch (error) {
-                console.error('❌ Error verificando autenticación:', error);
+                console.error('Error checking auth:', error);
                 window.location.href = '/static/login.html';
                 return false;
             }
@@ -235,26 +354,6 @@
             }
         }
 
-        async function loadQueue(status = 'pending') {
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('empty-state').classList.add('hidden');
-            
-            try {
-                const response = await fetch(`${API_BASE}/queue?status=${status}&limit=50`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderQueue(data.items);
-                } else {
-                    console.error('Error loading queue:', data);
-                }
-            } catch (error) {
-                console.error('Error loading queue:', error);
-            } finally {
-                document.getElementById('loading').classList.add('hidden');
-            }
-        }
-
         function renderQueue(items) {
             const container = document.getElementById('queue-container');
             
@@ -275,270 +374,156 @@
                                 <span class="px-2 py-1 text-xs font-medium rounded-full ${getDecisionClass(item.decision_type)}">
                                     ${getDecisionText(item.decision_type)}
                                 </span>
-                                <span class="text-xs text-gray-500">
-                                    ⚡ Sistema Automático
-                                </span>
+                                ${item.email_delivery_status ? `
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full ${getEmailDeliveryClass(item.email_delivery_status)}">
+                                        ${getEmailDeliveryIcon(item.email_delivery_status)} ${getEmailDeliveryText(item.email_delivery_status)}
+                                    </span>
+                                ` : ''}
                             </div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-1">${item.email_subject}</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                ${item.user_name} - ${item.show_description}
+                            </h3>
                             <p class="text-sm text-gray-600 mb-2">
-                                <i class="fas fa-user mr-1"></i> ${item.user_name} (${item.user_email})
-                            </p>
-                            <p class="text-sm text-gray-600 mb-2">
-                                <i class="fas fa-calendar mr-1"></i> Evento: "${item.show_description}"
-                            </p>
-                            <p class="text-xs text-gray-500">
-                                <i class="fas fa-clock mr-1"></i> ${formatDateTime(item.created_at)}
-                                ${item.confidence_score ? `• Confianza: ${Math.round(item.confidence_score * 100)}%` : ''}
-                                • Tiempo: ${item.processing_time}s
+                                <i class="fas fa-envelope mr-1"></i>${item.user_email}
                             </p>
                         </div>
-                        <div class="flex items-center space-x-2 ml-4">
-                            <!-- Botones según estado -->
-                            ${item.status === 'pending' ? `
-                                <button onclick="editEmailWithStatus(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    <i class="fas fa-edit mr-1"></i>
-                                    Editar
-                                </button>
-                                <button onclick="approveItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                                    <i class="fas fa-check mr-1"></i>
-                                    Aprobar
-                                </button>
-                                <button onclick="rejectItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
-                                    <i class="fas fa-times mr-1"></i>
-                                    Rechazar
-                                </button>
-                            ` : item.status === 'approved' ? `
-                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    Confirmar y Enviar MAIL
-                                </button>
-                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    <i class="fas fa-edit mr-1"></i>
-                                    Editar
-                                </button>
-                            ` : item.status === 'rejected' ? `
-                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
-                                    <i class="fas fa-times-circle mr-1"></i>
-                                    Confirmar y Enviar MAIL
-                                </button>
-                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    <i class="fas fa-edit mr-1"></i>
-                                    Editar
-                                </button>
+                        <div class="flex items-center space-x-2">
+                            ${(item.status === 'approved' || item.status === 'rejected') ? `
+                                <input type="checkbox" class="item-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-item-id="${item.id}">
                             ` : ''}
+                            
+                            <button onclick="editItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-edit mr-1"></i>
+                                Editar
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Email Content Preview -->
                     <div class="border-t pt-4">
-                        <details class="cursor-pointer" open>
-                            <summary class="text-sm font-medium text-gray-700 hover:text-gray-900">
-                                <i class="fas fa-envelope mr-1"></i>
-                                Ver contenido del email
-                            </summary>
-                            <div class="mt-3 p-4 bg-gray-50 rounded-md">
-                                <pre class="text-sm text-gray-700 whitespace-pre-wrap">${item.email_content}</pre>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 mb-2">
+                                    <i class="fas fa-brain mr-1"></i>Razonamiento
+                                </h4>
+                                <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${item.reasoning}</p>
                             </div>
-                        </details>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 mb-2">
+                                    <i class="fas fa-envelope mr-1"></i>Contenido del Email
+                                    <button onclick="toggleEmailContent(${item.id})" class="ml-2 text-xs text-indigo-600 hover:text-indigo-800">
+                                        <i class="fas fa-chevron-down" id="chevron-${item.id}"></i>
+                                        Ver contenido
+                                    </button>
+                                </h4>
+                                <div id="email-content-${item.id}" class="hidden">
+                                    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded mb-2">
+                                        <strong>Asunto:</strong> ${item.email_subject}
+                                    </div>
+                                    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded max-h-32 overflow-y-auto">
+                                        ${item.email_content}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t">
+                            <div class="text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i>
+                                Procesado en ${item.processing_time}s
+                                ${item.created_at ? ` • ${new Date(item.created_at).toLocaleString()}` : ''}
+                            </div>
+                            <div class="flex space-x-2">
+                                ${item.status === 'approved' || item.status === 'rejected' ? `
+                                    <button onclick="markAsSent(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                        <i class="fas fa-paper-plane mr-1"></i>
+                                        Confirmar y Enviar MAIL
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
-
-                    ${item.reasoning ? `
-                        <div class="border-t pt-4 mt-4">
-                            <p class="text-sm text-gray-700">
-                                <i class="fas fa-brain mr-1"></i>
-                                <strong>Razonamiento:</strong> ${item.reasoning}
-                            </p>
-                        </div>
-                    ` : ''}
-
-                    ${item.reviewed_by ? `
-                        <div class="border-t pt-4 mt-4">
-                            <p class="text-sm text-gray-700">
-                                <i class="fas fa-user-check mr-1"></i>
-                                <strong>Revisado por:</strong> ${item.reviewed_by}
-                                ${item.reviewed_at ? `el ${formatDateTime(item.reviewed_at)}` : ''}
-                            </p>
-                            ${item.supervisor_notes ? `<p class="text-sm text-gray-600 mt-1">${item.supervisor_notes}</p>` : ''}
-                        </div>
-                    ` : ''}
                 </div>
             `).join('');
+
+            // Ocultar empty state si hay elementos
+            document.getElementById('empty-state').classList.add('hidden');
+        }
+
+        // 📊 Función mejorada para cargar cola con filtros
+        async function loadQueueWithFilters() {
+            try {
+                const loading = document.getElementById('loading');
+                const container = document.getElementById('queue-container');
+                const emptyState = document.getElementById('empty-state');
+                
+                loading.classList.remove('hidden');
+                container.innerHTML = '';
+                emptyState.classList.add('hidden');
+                
+                // Construir URL con parámetros
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    page_size: currentPageSize,
+                    ...currentFilters
+                });
+                
+                const response = await fetch(`${API_BASE}/queue?${params}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.items.length > 0) {
+                    renderQueue(data.items);
+                    updatePagination(data);
+                    updateFilterResultsInfo(data);
+                } else {
+                    emptyState.classList.remove('hidden');
+                    hidePagination();
+                }
+            } catch (error) {
+                console.error('Error loading queue:', error);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+            }
         }
 
         function filterQueue(status) {
             currentFilter = status;
+            currentFilters = { status }; // Reiniciar filtros con solo el status
+            currentPage = 1;
             
-            // Update tab appearance
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                if (btn.dataset.status === status) {
-                    btn.classList.remove('border-transparent', 'text-gray-500');
-                    btn.classList.add('border-indigo-500', 'text-indigo-600');
-                } else {
-                    btn.classList.add('border-transparent', 'text-gray-500');
-                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+            // Mostrar bulk actions en aprobados y rechazados
+            const bulkActions = document.getElementById('bulk-actions');
+            if (status === 'approved' || status === 'rejected') {
+                bulkActions.classList.remove('hidden');
+                
+                // Cambiar el texto del botón según el status
+                const sendText = document.getElementById('bulk-send-text');
+                if (sendText) {
+                    if (status === 'approved') {
+                        sendText.textContent = 'Confirmar y Enviar Seleccionados';
+                    } else if (status === 'rejected') {
+                        sendText.textContent = 'Confirmar y Enviar Rechazos';
+                    }
                 }
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
             });
             
-            loadQueue(status);
-        }
-
-        // 📧 Editar Email
-        async function editEmail(itemId) {
-            try {
-                // Get item details
-                const response = await fetch(`${API_BASE}/queue/${itemId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const item = data.item;
-                    currentEditItemId = itemId;
-                    
-                    // Populate form
-                    document.getElementById('edit-email-subject').value = item.email_subject || '';
-                    document.getElementById('edit-email-content').value = item.email_content || '';
-                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
-                    
-                    // Show modal
-                    document.getElementById('edit-email-modal').classList.remove('hidden');
-                } else {
-                    alert('Error loading item details');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión. Intenta nuevamente.');
-            }
-        }
-
-        function closeEditModal() {
-            document.getElementById('edit-email-modal').classList.add('hidden');
-            currentEditItemId = null;
-        }
-
-        // 💾 Guardar cambios de email
-        async function saveEmailEdit() {
-            if (!currentEditItemId) return;
-            
-            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
-            const subject = document.getElementById('edit-email-subject').value.trim();
-            const content = document.getElementById('edit-email-content').value.trim();
-            const notes = document.getElementById('edit-supervisor-notes').value.trim();
-            
-            if (!content) {
-                alert('El contenido del email es obligatorio');
-                return;
+            const activeTab = document.querySelector(`[data-status="${status}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
             }
             
-            try {
-                const response = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email_subject: subject,
-                        email_content: content,
-                        reviewer: reviewer,
-                        notes: notes
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    closeEditModal();
-                    refreshQueue();
-                    // Sin alert molesto
-                } else {
-                    alert(`Error: ${data.detail || 'No se pudo guardar'}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error guardando cambios. Intenta nuevamente.');
-            }
+            loadQueueWithFilters();
         }
 
-        // ELIMINADO: función saveAndApprove - ya no se usa
-
-        // ✅ Aprobar directamente (sin modal de confirmación)
-        async function approveItem(itemId) {
-            const reviewer = 'Supervisor'; // Hardcoded por ahora
-            
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'approve',
-                        reviewer: reviewer,
-                        notes: 'Aprobado directamente'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    refreshQueue();
-                    // Sin alert molesto - solo actualizar la vista
-                } else {
-                    alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión. Intenta nuevamente.');
-            }
-        }
-
-        // ❌ Rechazar directamente (sin modal de confirmación)
-        async function rejectItem(itemId) {
-            const reviewer = 'Supervisor'; // Hardcoded por ahora
-            
-            const notes = prompt('Razón del rechazo (obligatorio):');
-            if (!notes) {
-                alert('Las notas son obligatorias para rechazar una solicitud');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'reject',
-                        reviewer: reviewer,
-                        notes: notes
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    refreshQueue();
-                    // Sin alert molesto - solo actualizar la vista
-                } else {
-                    alert(`Error: ${data.detail || 'No se pudo procesar el rechazo'}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión. Intenta nuevamente.');
-            }
-        }
-
-
-
-
-
-        function refreshQueue() {
-            loadStats();
-            loadQueue(currentFilter);
-        }
-
-        // Utility functions
+        // Funciones auxiliares
         function getStatusText(status) {
             const statusMap = {
                 'pending': 'Pendiente',
@@ -549,302 +534,281 @@
             return statusMap[status] || status;
         }
 
-        function getDecisionText(decision) {
-            const decisionMap = {
-                'approved': '✅ Aprobado',
-                'rejected': '❌ Rechazado',
-                'needs_clarification': '🤔 Clarificación'
-            };
-            return decisionMap[decision] || decision;
-        }
-
-        function getDecisionClass(decision) {
+        function getDecisionClass(decisionType) {
             const classMap = {
                 'approved': 'bg-green-100 text-green-800',
                 'rejected': 'bg-red-100 text-red-800',
                 'needs_clarification': 'bg-yellow-100 text-yellow-800'
             };
-            return classMap[decision] || 'bg-gray-100 text-gray-800';
+            return classMap[decisionType] || 'bg-gray-100 text-gray-800';
         }
 
-        function formatDateTime(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleString('es-ES', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        function getDecisionText(decisionType) {
+            const textMap = {
+                'approved': 'Aprobado',
+                'rejected': 'Rechazado',
+                'needs_clarification': 'Necesita Aclaración'
+            };
+            return textMap[decisionType] || decisionType;
         }
 
-        // 🔄 Cambiar estado de un item
-        async function changeStatus(itemId, newStatus) {
-            const reviewer = 'Supervisor';
-            const notes = newStatus === 'rejected' ? prompt('Razón del rechazo:') : 'Cambio de estado';
+        function getEmailDeliveryClass(deliveryStatus) {
+            const classMap = {
+                'sent': 'bg-blue-100 text-blue-800',
+                'delivered': 'bg-green-100 text-green-800',
+                'bounced': 'bg-red-100 text-red-800',
+                'failed': 'bg-red-100 text-red-800'
+            };
+            return classMap[deliveryStatus] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getEmailDeliveryIcon(deliveryStatus) {
+            const iconMap = {
+                'sent': '📤',
+                'delivered': '✅',
+                'bounced': '⚠️',
+                'failed': '❌'
+            };
+            return iconMap[deliveryStatus] || '📧';
+        }
+
+        function getEmailDeliveryText(deliveryStatus) {
+            const textMap = {
+                'sent': 'Entregado ✓',
+                'delivered': 'Entregado ✓',
+                'bounced': 'Rebotó',
+                'failed': 'Bloqueado'
+            };
+            return textMap[deliveryStatus] || deliveryStatus;
+        }
+
+        function toggleFilters() {
+            const filtersSection = document.getElementById('filters-section');
+            const chevron = document.getElementById('filter-chevron');
+            const toggleText = document.getElementById('filter-toggle-text');
             
-            if (newStatus === 'rejected' && !notes) {
-                alert('Las notas son obligatorias para rechazar');
+            if (filtersSection.classList.contains('hidden')) {
+                filtersSection.classList.remove('hidden');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+                toggleText.textContent = 'Ocultar filtros';
+            } else {
+                filtersSection.classList.add('hidden');
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+                toggleText.textContent = 'Mostrar filtros';
+            }
+        }
+
+        function applyFilters() {
+            const email = document.getElementById('filter-email').value;
+            const date = document.getElementById('filter-date').value;
+            const venue = document.getElementById('filter-venue').value;
+            
+            currentFilters = { status: currentFilter };
+            if (email) currentFilters.email = email;
+            if (date) currentFilters.date = date;
+            if (venue) currentFilters.venue = venue;
+            
+            currentPage = 1;
+            loadQueueWithFilters();
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-email').value = '';
+            document.getElementById('filter-date').value = '';
+            document.getElementById('filter-venue').value = '';
+            
+            currentFilters = { status: currentFilter };
+            currentPage = 1;
+            loadQueueWithFilters();
+        }
+
+        function refreshQueue() {
+            loadStats();
+            loadQueueWithFilters();
+        }
+
+        function updatePagination(data) {
+            const containerTop = document.getElementById('pagination-container-top');
+            const container = document.getElementById('pagination-container');
+            
+            if (data.total_pages <= 1) {
+                containerTop.classList.add('hidden');
+                container.classList.add('hidden');
                 return;
             }
             
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: newStatus === 'approved' ? 'approve' : 'reject',
-                        reviewer: reviewer,
-                        notes: notes
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    refreshQueue();
-                } else {
-                    alert(`Error: ${data.detail || 'No se pudo cambiar el estado'}`);
+            containerTop.classList.remove('hidden');
+            container.classList.remove('hidden');
+            
+            // Actualizar información
+            const startItem = (data.page - 1) * data.page_size + 1;
+            const endItem = Math.min(data.page * data.page_size, data.total);
+            
+            document.getElementById('pagination-showing-top').textContent = `${startItem}-${endItem}`;
+            document.getElementById('pagination-total-top').textContent = data.total;
+            document.getElementById('pagination-showing').textContent = `${startItem}-${endItem}`;
+            document.getElementById('pagination-total').textContent = data.total;
+            
+            // Actualizar botones
+            const prevBtnTop = document.getElementById('pagination-prev-top');
+            const nextBtnTop = document.getElementById('pagination-next-top');
+            const prevBtn = document.getElementById('pagination-prev');
+            const nextBtn = document.getElementById('pagination-next');
+            
+            prevBtnTop.disabled = !data.has_prev;
+            nextBtnTop.disabled = !data.has_next;
+            prevBtn.disabled = !data.has_prev;
+            nextBtn.disabled = !data.has_next;
+            
+            // Eventos de navegación
+            prevBtnTop.onclick = prevBtn.onclick = () => {
+                if (data.has_prev) {
+                    currentPage--;
+                    loadQueueWithFilters();
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión');
+            };
+            
+            nextBtnTop.onclick = nextBtn.onclick = () => {
+                if (data.has_next) {
+                    currentPage++;
+                    loadQueueWithFilters();
+                }
+            };
+            
+            // Generar números de página
+            updatePageNumbers(data);
+        }
+
+        function updatePageNumbers(data) {
+            const numbersContainerTop = document.getElementById('pagination-numbers-top');
+            const numbersContainer = document.getElementById('pagination-numbers');
+            
+            // Limpiar contenedores
+            numbersContainerTop.innerHTML = '';
+            numbersContainer.innerHTML = '';
+            
+            // Calcular rango de páginas a mostrar
+            const maxVisible = 5;
+            let startPage = Math.max(1, data.page - Math.floor(maxVisible / 2));
+            let endPage = Math.min(data.total_pages, startPage + maxVisible - 1);
+            
+            // Ajustar si no hay suficientes páginas al final
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            // Crear botones de página para ambos contenedores
+            for (let i = startPage; i <= endPage; i++) {
+                const btnTop = createPageButton(i, data.page);
+                const btn = createPageButton(i, data.page);
+                numbersContainerTop.appendChild(btnTop);
+                numbersContainer.appendChild(btn);
             }
         }
 
-        // 📧 Enviar email individual
-        async function sendEmail(itemId) {
+        function createPageButton(pageNum, currentPageNum) {
+            const button = document.createElement('button');
+            button.textContent = pageNum;
+            button.className = `px-3 py-2 text-sm font-medium rounded-md ${
+                pageNum === currentPageNum 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+            }`;
+            button.onclick = () => {
+                currentPage = pageNum;
+                loadQueueWithFilters();
+            };
+            return button;
+        }
+
+        function hidePagination() {
+            document.getElementById('pagination-container-top').classList.add('hidden');
+            document.getElementById('pagination-container').classList.add('hidden');
+        }
+
+        function updateFilterResultsInfo(data) {
+            // Actualizar información de resultados filtrados si es necesario
+        }
+
+        function toggleEmailContent(itemId) {
+            const content = document.getElementById(`email-content-${itemId}`);
+            const chevron = document.getElementById(`chevron-${itemId}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                content.classList.add('hidden');
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+
+        async function markAsSent(itemId) {
             try {
                 const response = await fetch(`${API_BASE}/queue/${itemId}/send`, {
                     method: 'POST'
                 });
                 
-                const data = await response.json();
-                if (data.success) {
+                if (response.ok) {
                     refreshQueue();
                 } else {
-                    alert(`Error: ${data.detail || 'No se pudo enviar'}`);
+                    const errorData = await response.json();
+                    alert(`Error al marcar como enviado: ${errorData.detail || 'Error desconocido'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión');
+                alert('Error al marcar como enviado');
             }
         }
 
-        // ✏️ Editar email con posibilidad de cambiar estado (para pendientes)
-        async function editEmailWithStatus(itemId) {
-            editEmail(itemId);
-            // El campo de estado ya está visible en el modal
+        // Funciones de aprobar/rechazar eliminadas - ya no hay elementos pendientes
+
+        function editItem(itemId) {
+            // Implementar edición
+            console.log('Edit item:', itemId);
         }
 
-        // 📋 Funciones de selección múltiple
-        function selectAllEmails() {
-            document.querySelectorAll('.email-checkbox').forEach(cb => {
-                cb.checked = true;
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
             });
-            updateSelectedCount();
-        }
-
-        function deselectAllEmails() {
-            document.querySelectorAll('.email-checkbox').forEach(cb => {
-                cb.checked = false;
-            });
+            
             updateSelectedCount();
         }
 
         function updateSelectedCount() {
-            const selected = document.querySelectorAll('.email-checkbox:checked').length;
-            document.getElementById('selected-count').textContent = `${selected} seleccionados`;
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            const count = checkboxes.length;
+            
+            document.getElementById('selected-count').textContent = `${count} seleccionados`;
+            
+            const sendButton = document.getElementById('bulk-send-btn');
+            sendButton.disabled = count === 0;
         }
 
-        // 📧 Enviar emails seleccionados
-        async function sendSelectedEmails() {
-            const selectedIds = Array.from(document.querySelectorAll('.email-checkbox:checked'))
-                .map(cb => cb.dataset.id);
+        function sendSelectedEmails() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            const itemIds = Array.from(checkboxes).map(cb => cb.dataset.itemId);
             
-            if (selectedIds.length === 0) {
-                alert('Selecciona al menos un email');
+            if (itemIds.length === 0) {
+                alert('No hay elementos seleccionados');
                 return;
             }
             
-            if (!confirm(`¿Enviar ${selectedIds.length} emails?`)) return;
+            if (!confirm(`¿Confirmar y enviar ${itemIds.length} emails?`)) return;
             
-            for (const id of selectedIds) {
-                await sendEmail(id);
-            }
-            
-            refreshQueue();
+            // Implementar envío masivo
+            console.log('Send emails for items:', itemIds);
         }
 
-        // 🔄 Actualizar función de filtrado para mostrar/ocultar bulk actions
-        function filterQueue(status) {
-            currentFilter = status;
-            
-            // Mostrar bulk actions en aprobados y rechazados
-            const bulkActions = document.getElementById('bulk-actions');
-            if (status === 'approved' || status === 'rejected') {
-                bulkActions.classList.remove('hidden');
-                
-                // Cambiar el texto del botón según el status
-                const sendButton = bulkActions.querySelector('button[onclick="sendSelectedEmails()"]');
-                if (sendButton) {
-                    if (status === 'approved') {
-                        sendButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar y Enviar Seleccionados';
-                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700';
-                    } else if (status === 'rejected') {
-                        sendButton.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Confirmar y Enviar Rechazos';
-                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700';
-                    }
-                }
-            } else {
-                bulkActions.classList.add('hidden');
-            }
-            
-            // Update active tab
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'text-indigo-600');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-            
-            const activeTab = document.querySelector(`[data-status="${status}"]`);
-            if (activeTab) {
-                activeTab.classList.remove('border-transparent', 'text-gray-500');
-                activeTab.classList.add('border-indigo-500', 'text-indigo-600');
-            }
-            
-            loadQueue(status);
-        }
-
-        // 💾 Actualizar función de guardar para incluir estado
-        async function saveEmailEdit() {
-            if (!currentEditItemId) return;
-            
-            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
-            const subject = document.getElementById('edit-email-subject').value.trim();
-            const content = document.getElementById('edit-email-content').value.trim();
-            const notes = document.getElementById('edit-supervisor-notes').value.trim();
-            const newStatus = document.getElementById('edit-status').value;
-            
-            if (!content) {
-                alert('El contenido del email es obligatorio');
-                return;
-            }
-            
-            try {
-                // Primero actualizar el contenido
-                const editResponse = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email_subject: subject,
-                        email_content: content,
-                        reviewer: reviewer,
-                        notes: notes
-                    })
-                });
-                
-                const editData = await editResponse.json();
-                if (!editData.success) {
-                    alert(`Error: ${editData.detail || 'No se pudo guardar'}`);
-                    return;
-                }
-                
-                // Si cambió el estado, hacer la acción correspondiente
-                const currentItem = await getCurrentItemStatus(currentEditItemId);
-                if (currentItem && currentItem.status !== newStatus) {
-                    await changeStatus(currentEditItemId, newStatus);
-                }
-                
-                closeEditModal();
-                refreshQueue();
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión');
-            }
-        }
-
-        // 🔍 Obtener estado actual de un item
-        async function getCurrentItemStatus(itemId) {
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}`);
-                const data = await response.json();
-                return data.success ? data.item : null;
-            } catch (error) {
-                console.error('Error:', error);
-                return null;
-            }
-        }
-
-        // 📧 Actualizar función de editar para llenar el estado
-        async function editEmail(itemId) {
-            try {
-                const response = await fetch(`${API_BASE}/queue/${itemId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const item = data.item;
-                    currentEditItemId = itemId;
-                    
-                    // Llenar campos
-                    document.getElementById('edit-email-subject').value = item.email_subject || '';
-                    document.getElementById('edit-email-content').value = item.email_content || '';
-                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
-                    
-                    // Populate status options dynamically (never allow going back to pending)
-                    const statusSelect = document.getElementById('edit-status');
-                    statusSelect.innerHTML = '';
-                    
-                    if (item.status === 'pending') {
-                        statusSelect.innerHTML = `
-                            <option value="pending">⏳ Pendiente</option>
-                            <option value="approved">✅ Aprobado</option>
-                            <option value="rejected">❌ Rechazado</option>
-                        `;
-                    } else if (item.status === 'approved') {
-                        statusSelect.innerHTML = `
-                            <option value="approved">✅ Aprobado</option>
-                            <option value="rejected">❌ Rechazado</option>
-                        `;
-                    } else if (item.status === 'rejected') {
-                        statusSelect.innerHTML = `
-                            <option value="rejected">❌ Rechazado</option>
-                            <option value="approved">✅ Aprobado</option>
-                        `;
-                    }
-                    
-                    statusSelect.value = item.status;
-                    
-                    // Mostrar modal
-                    document.getElementById('edit-email-modal').classList.remove('hidden');
-                } else {
-                    alert('Error loading item details');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error de conexión');
-            }
-        }
-
-        // 🔄 Agregar listener para checkboxes
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('email-checkbox')) {
-                updateSelectedCount();
-            }
-        });
-
-        // 🚪 Función de logout
-        async function logout() {
-            try {
-                await fetch('/api/v1/auth/logout', { method: 'POST' });
-                window.location.href = '/static/login.html';
-            } catch (error) {
-                console.error('Error al cerrar sesión:', error);
-                // Redirigir de todos modos
-                window.location.href = '/static/login.html';
-            }
-        }
-
-        // Initialize page
+        // Inicialización
         document.addEventListener('DOMContentLoaded', async () => {
             // Verificar autenticación primero
             const isAuthenticated = await checkAuth();
@@ -852,18 +816,51 @@
             
             // Cargar dashboard si está autenticado
             loadStats();
-            loadQueue('approved'); // Cambié de 'pending' a 'approved' según el flujo actual
+            filterQueue('approved'); // Iniciar en Aprobados
             
             // Auto-refresh every 30 seconds
             setInterval(refreshQueue, 30000);
+            
+            // Event listeners para checkboxes
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('item-checkbox')) {
+                    updateSelectedCount();
+                }
+            });
         });
 
         // Handle modal closing with Escape key
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeEditModal();
             }
         });
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        // 🚪 Función de logout
+        async function logout() {
+            try {
+                const response = await fetch('/api/v1/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/static/login.html';
+                } else {
+                    console.error('Error en logout');
+                    // Redirigir de todos modos
+                    window.location.href = '/static/login.html';
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                // Redirigir de todos modos
+                window.location.href = '/static/login.html';
+            }
+        }
     </script>
 </body>
 </html> 

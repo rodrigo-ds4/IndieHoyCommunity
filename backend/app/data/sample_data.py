@@ -1,14 +1,14 @@
 """
-Sample Data for Testing
-Creates realistic users, shows, and sample requests for development
+Sample Data Creation
+Utility functions to create sample data for testing
 """
 
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 import random
 
-from app.models.database import User, Show, DiscountRequest
-from app.core.database import SessionLocal
+from app.models.database import User, Show  # DiscountRequest eliminado
+from app.core.database import SessionLocal  # Usar SessionLocal directamente
 
 
 def create_sample_data():
@@ -203,7 +203,6 @@ def clear_sample_data():
     db = SessionLocal()
     try:
         print("🗑️ Clearing sample data...")
-        db.query(DiscountRequest).delete()
         db.query(Show).delete()
         db.query(User).delete()
         db.commit()

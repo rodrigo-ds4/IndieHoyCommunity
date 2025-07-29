@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse - IndieHOY</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .success-animation {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .error-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .field-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+        
+        .field-success {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-music text-2xl"></i>
+                    <h1 class="text-2xl font-bold">IndieHOY</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-gray-200 transition-colors">
+                        <i class="fas fa-ticket-alt mr-2"></i>Solicitar Descuento
+                    </a>
+                    <a href="/register" class="text-yellow-300 font-medium">
+                        <i class="fas fa-user-plus mr-2"></i>Registrarse
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <div class="max-w-2xl mx-auto">
+            
+            <!-- Form Card -->
+            <div id="registration-form" class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user-plus text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">¡Únete a IndieHOY!</h2>
+                    <p class="text-gray-600">Creá tu cuenta para acceder a descuentos exclusivos en eventos indies</p>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="registerForm" class="space-y-6">
+                    
+                    <!-- Nombre -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-purple-500"></i>Nombre completo *
+                        </label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name"
+                            required
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Tu nombre completo"
+                        >
+                        <div id="name-error" class="hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-envelope mr-2 text-purple-500"></i>Email *
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email"
+                                required
+                                class="form-input w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="tu@email.com"
+                            >
+                            <div id="email-spinner" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <div id="email-check" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <i class="fas fa-check text-green-500"></i>
+                            </div>
+                        </div>
+                        <div id="email-error" class="hidden text-red-500 text-sm mt-1"></div>
+                        <div id="email-success" class="hidden text-green-600 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- DNI -->
+                    <div>
+                        <label for="dni" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-id-card mr-2 text-purple-500"></i>DNI
+                        </label>
+                        <input 
+                            type="number" 
+                            id="dni" 
+                            name="dni"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="12345678"
+                        >
+                        <div id="dni-error" class="hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone mr-2 text-purple-500"></i>Teléfono
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="+54 11 1234-5678"
+                        >
+                        <div id="phone-error" class="hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- Ciudad -->
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>Ciudad
+                        </label>
+                        <input 
+                            type="text" 
+                            id="city" 
+                            name="city"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Buenos Aires"
+                        >
+                        <div id="city-error" class="hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- Cómo nos conociste -->
+                    <div>
+                        <label for="how_did_you_find_us" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-search mr-2 text-purple-500"></i>¿Cómo conociste IndieHOY?
+                        </label>
+                        <select 
+                            id="how_did_you_find_us" 
+                            name="how_did_you_find_us"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        >
+                            <option value="">Seleccionar...</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="google">Google</option>
+                            <option value="referral">Recomendación de amigo</option>
+                            <option value="event">En un evento</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Género musical favorito -->
+                    <div>
+                        <label for="favorite_music_genre" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-music mr-2 text-purple-500"></i>Género musical favorito
+                        </label>
+                        <select 
+                            id="favorite_music_genre" 
+                            name="favorite_music_genre"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        >
+                            <option value="">Seleccionar...</option>
+                            <option value="indie rock">Indie Rock</option>
+                            <option value="indie pop">Indie Pop</option>
+                            <option value="folk">Folk</option>
+                            <option value="electronic">Electrónica</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="alternative">Alternativo</option>
+                            <option value="rock">Rock</option>
+                            <option value="pop">Pop</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit" 
+                        id="submitBtn"
+                        class="btn-primary w-full text-white font-semibold py-4 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span id="submit-text">
+                            <i class="fas fa-user-plus mr-2"></i>Crear mi cuenta
+                        </span>
+                        <span id="submit-loading" class="hidden">
+                            <div class="loading-spinner inline-block mr-2"></div>
+                            Creando cuenta...
+                        </span>
+                    </button>
+
+                    <!-- Terms -->
+                    <p class="text-xs text-gray-500 text-center">
+                        Al registrarte, aceptás nuestros 
+                        <a href="#" class="text-purple-600 hover:underline">Términos y Condiciones</a> 
+                        y 
+                        <a href="#" class="text-purple-600 hover:underline">Política de Privacidad</a>
+                    </p>
+
+                </form>
+            </div>
+
+            <!-- Success Card (Hidden) -->
+            <div id="success-card" class="hidden bg-white rounded-2xl shadow-xl p-8 border border-gray-100 success-animation">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-green-600 mb-4">¡Cuenta creada exitosamente!</h3>
+                    <p id="success-message" class="text-gray-600 mb-6"></p>
+                    
+                    <div class="space-y-4">
+                        <a href="/" class="btn-primary inline-block text-white font-semibold py-3 px-6 rounded-lg text-decoration-none">
+                            <i class="fas fa-ticket-alt mr-2"></i>Solicitar mi primer descuento
+                        </a>
+                        <br>
+                        <button onclick="resetForm()" class="text-purple-600 hover:underline text-sm">
+                            Registrar otro usuario
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <i class="fas fa-music text-xl"></i>
+                <span class="text-xl font-bold">IndieHOY</span>
+            </div>
+            <p class="text-gray-400">Conectando la comunidad indie argentina</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // ========================================
+        // 🔧 CONFIGURACIÓN Y VARIABLES GLOBALES
+        // ========================================
+        
+        const API_BASE = '/api/v1';
+        let emailCheckTimeout = null;
+        let isEmailValid = false;
+        
+        // ========================================
+        // 🎯 VALIDACIONES EN TIEMPO REAL
+        // ========================================
+        
+        // Validación de email en tiempo real
+        document.getElementById('email').addEventListener('input', function(e) {
+            const email = e.target.value.trim();
+            
+            // Limpiar timeout anterior
+            if (emailCheckTimeout) {
+                clearTimeout(emailCheckTimeout);
+            }
+            
+            // Resetear estado
+            hideFieldMessages('email');
+            hideEmailIndicators();
+            
+            if (!email) {
+                isEmailValid = false;
+                return;
+            }
+            
+            // Validar formato básico
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFieldError('email', 'Formato de email inválido');
+                isEmailValid = false;
+                return;
+            }
+            
+            // Mostrar spinner y verificar en el servidor después de 500ms
+            emailCheckTimeout = setTimeout(() => {
+                checkEmailAvailability(email);
+            }, 500);
+        });
+        
+        // Validación de nombre
+        document.getElementById('name').addEventListener('input', function(e) {
+            const name = e.target.value.trim();
+            hideFieldMessages('name');
+            
+            if (name && name.length < 2) {
+                showFieldError('name', 'El nombre debe tener al menos 2 caracteres');
+            } else if (name && name.length > 100) {
+                showFieldError('name', 'El nombre no puede tener más de 100 caracteres');
+            } else if (name) {
+                showFieldSuccess('name');
+            }
+        });
+        
+        // Validación de teléfono
+        document.getElementById('phone').addEventListener('input', function(e) {
+            const phone = e.target.value.trim();
+            hideFieldMessages('phone');
+            
+            if (phone) {
+                const phoneRegex = /^(\+54\s?)?(\d{2,4}[\s\-]?\d{4}[\s\-]?\d{4}|\d{10,11})$/;
+                if (!phoneRegex.test(phone)) {
+                    showFieldError('phone', 'Formato de teléfono inválido (ej: +54 11 1234-5678)');
+                } else {
+                    showFieldSuccess('phone');
+                }
+            }
+        });
+        
+        // ========================================
+        // 🔍 VERIFICACIÓN DE EMAIL
+        // ========================================
+        
+        async function checkEmailAvailability(email) {
+            showEmailSpinner();
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/check-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                hideEmailSpinner();
+                
+                if (data.exists) {
+                    showFieldError('email', data.message);
+                    isEmailValid = false;
+                } else {
+                    showFieldSuccess('email', data.message);
+                    showEmailCheck();
+                    isEmailValid = true;
+                }
+                
+            } catch (error) {
+                console.error('Error checking email:', error);
+                hideEmailSpinner();
+                showFieldError('email', 'Error verificando email. Intenta nuevamente.');
+                isEmailValid = false;
+            }
+        }
+        
+        // ========================================
+        // 📝 ENVÍO DEL FORMULARIO
+        // ========================================
+        
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validar que el email esté verificado
+            if (!isEmailValid) {
+                showFieldError('email', 'Debes verificar que el email esté disponible');
+                return;
+            }
+            
+            // Obtener datos del formulario
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name').trim(),
+                email: formData.get('email').trim(),
+                dni: formData.get('dni') ? parseInt(formData.get('dni')) : null,
+                phone: formData.get('phone')?.trim() || null,
+                city: formData.get('city')?.trim() || null,
+                how_did_you_find_us: formData.get('how_did_you_find_us') || null,
+                favorite_music_genre: formData.get('favorite_music_genre') || null
+            };
+            
+            // Validaciones básicas
+            if (!data.name || data.name.length < 2) {
+                showFieldError('name', 'El nombre es requerido y debe tener al menos 2 caracteres');
+                return;
+            }
+            
+            if (!data.email) {
+                showFieldError('email', 'El email es requerido');
+                return;
+            }
+            
+            // Mostrar loading
+            setSubmitLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Mostrar éxito
+                    showSuccess(result.message);
+                } else {
+                    // Mostrar error
+                    showError(result.message);
+                }
+                
+            } catch (error) {
+                console.error('Error registering user:', error);
+                showError('Error creando la cuenta. Por favor, intenta nuevamente.');
+            } finally {
+                setSubmitLoading(false);
+            }
+        });
+        
+        // ========================================
+        // 🎨 FUNCIONES DE UI
+        // ========================================
+        
+        function showFieldError(fieldName, message) {
+            const field = document.getElementById(fieldName);
+            const errorDiv = document.getElementById(`${fieldName}-error`);
+            
+            field.classList.add('field-error');
+            field.classList.remove('field-success');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            // Ocultar mensaje de éxito si existe
+            const successDiv = document.getElementById(`${fieldName}-success`);
+            if (successDiv) {
+                successDiv.classList.add('hidden');
+            }
+        }
+        
+        function showFieldSuccess(fieldName, message = '') {
+            const field = document.getElementById(fieldName);
+            field.classList.add('field-success');
+            field.classList.remove('field-error');
+            
+            if (message) {
+                const successDiv = document.getElementById(`${fieldName}-success`);
+                if (successDiv) {
+                    successDiv.textContent = message;
+                    successDiv.classList.remove('hidden');
+                }
+            }
+        }
+        
+        function hideFieldMessages(fieldName) {
+            const field = document.getElementById(fieldName);
+            const errorDiv = document.getElementById(`${fieldName}-error`);
+            const successDiv = document.getElementById(`${fieldName}-success`);
+            
+            field.classList.remove('field-error', 'field-success');
+            errorDiv.classList.add('hidden');
+            if (successDiv) {
+                successDiv.classList.add('hidden');
+            }
+        }
+        
+        function showEmailSpinner() {
+            document.getElementById('email-spinner').classList.remove('hidden');
+            document.getElementById('email-check').classList.add('hidden');
+        }
+        
+        function hideEmailSpinner() {
+            document.getElementById('email-spinner').classList.add('hidden');
+        }
+        
+        function showEmailCheck() {
+            document.getElementById('email-check').classList.remove('hidden');
+        }
+        
+        function hideEmailIndicators() {
+            document.getElementById('email-spinner').classList.add('hidden');
+            document.getElementById('email-check').classList.add('hidden');
+        }
+        
+        function setSubmitLoading(loading) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            
+            if (loading) {
+                submitBtn.disabled = true;
+                submitText.classList.add('hidden');
+                submitLoading.classList.remove('hidden');
+            } else {
+                submitBtn.disabled = false;
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }
+        }
+        
+        function showSuccess(message) {
+            document.getElementById('registration-form').classList.add('hidden');
+            document.getElementById('success-card').classList.remove('hidden');
+            document.getElementById('success-message').textContent = message;
+        }
+        
+        function showError(message) {
+            // Mostrar error general en la parte superior del formulario
+            const form = document.getElementById('registerForm');
+            
+            // Remover error anterior si existe
+            const existingError = document.getElementById('form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Crear nuevo error
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'form-error';
+            errorDiv.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 error-shake';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            form.insertBefore(errorDiv, form.firstChild);
+            
+            // Remover error después de 5 segundos
+            setTimeout(() => {
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        function resetForm() {
+            document.getElementById('success-card').classList.add('hidden');
+            document.getElementById('registration-form').classList.remove('hidden');
+            document.getElementById('registerForm').reset();
+            
+            // Resetear estados
+            isEmailValid = false;
+            hideEmailIndicators();
+            
+            // Limpiar mensajes
+            ['name', 'email', 'dni', 'phone', 'city'].forEach(field => {
+                hideFieldMessages(field);
+            });
+            
+            // Remover error general si existe
+            const existingError = document.getElementById('form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+        
+        // ========================================
+        // 🚀 INICIALIZACIÓN
+        // ========================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎵 IndieHOY Registration Page Loaded');
+            
+            // Focus en el primer campo
+            document.getElementById('name').focus();
+        });
+        
+    </script>
+</body>
+</html> 

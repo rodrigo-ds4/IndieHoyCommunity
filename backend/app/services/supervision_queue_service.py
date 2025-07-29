@@ -115,8 +115,9 @@ class SupervisionQueueService:
                 return False
             
             item.status = "sent"
+            item.email_delivery_status = "sent"  # Nuevo campo
             self.db.commit()
-            logger.info(f"📧 Marked item {item_id} as sent")
+            logger.info(f"📧 Marked item {item_id} as sent with delivery status")
             return True
             
         except Exception as e:
@@ -138,6 +139,136 @@ class SupervisionQueueService:
         except Exception as e:
             logger.error(f"❌ Error getting queue stats: {str(e)}")
             return {"pending": 0, "approved": 0, "rejected": 0, "sent": 0, "total": 0}
+
+    def get_filtered_items(self, filters: dict, page: int = 1, page_size: int = 20) -> dict:
+        """
+        🔍 Obtener items con filtros y paginación avanzada
+        
+        Args:
+            filters: Diccionario con filtros (status, user_email, venue, etc.)
+            page: Número de página (1-based)
+            page_size: Items por página
+            
+        Returns:
+            dict: Respuesta paginada con items y metadata
+        """
+        try:
+            from sqlalchemy import and_, or_, func
+            from app.models.database import Show
+            from datetime import datetime
+            
+            # Base query con JOIN para obtener datos del show
+            query = self.db.query(SupervisionQueue)\
+                          .outerjoin(Show, SupervisionQueue.show_id == Show.id)
+            
+            # 🔍 Aplicar filtros
+            conditions = []
+            
+            # Filtro por status
+            if filters.get('status'):
+                conditions.append(SupervisionQueue.status == filters['status'])
+            
+            # Filtro por email del usuario
+            if filters.get('user_email'):
+                email_filter = f"%{filters['user_email']}%"
+                conditions.append(SupervisionQueue.user_email.ilike(email_filter))
+            
+            # Filtro por venue (desde show)
+            if filters.get('venue'):
+                venue_filter = f"%{filters['venue']}%"
+                conditions.append(Show.venue.ilike(venue_filter))
+            
+            # Filtro por título del show
+            if filters.get('show_title'):
+                title_filter = f"%{filters['show_title']}%"
+                conditions.append(
+                    or_(
+                        Show.title.ilike(title_filter),
+                        SupervisionQueue.show_description.ilike(title_filter)
+                    )
+                )
+            
+            # Filtro por rango de fechas
+            if filters.get('date_from'):
+                try:
+                    date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
+                    conditions.append(SupervisionQueue.created_at >= date_from)
+                except ValueError:
+                    logger.warning(f"Invalid date_from format: {filters['date_from']}")
+            
+            if filters.get('date_to'):
+                try:
+                    date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
+                    # Incluir todo el día
+                    date_to = date_to.replace(hour=23, minute=59, second=59)
+                    conditions.append(SupervisionQueue.created_at <= date_to)
+                except ValueError:
+                    logger.warning(f"Invalid date_to format: {filters['date_to']}")
+            
+            # Aplicar todas las condiciones
+            if conditions:
+                query = query.filter(and_(*conditions))
+            
+            # 📊 Contar total de items (antes de paginación)
+            total_count = query.count()
+            
+            # 📄 Aplicar paginación
+            offset = (page - 1) * page_size
+            items = query.order_by(SupervisionQueue.created_at.desc())\
+                        .offset(offset)\
+                        .limit(page_size)\
+                        .all()
+            
+            # 🔄 Convertir a diccionarios con datos enriquecidos
+            items_data = []
+            for item in items:
+                # Obtener datos del show si existe
+                show_data = None
+                if item.show_id:
+                    show = self.db.query(Show).filter(Show.id == item.show_id).first()
+                    if show:
+                        show_data = {
+                            "title": show.title,
+                            "venue": show.venue,
+                            "show_date": show.show_date.isoformat() if show.show_date else None,
+                            "artist": show.artist,
+                            "max_discounts": show.max_discounts,
+                            "remaining_discounts": show.get_remaining_discounts(self.db)
+                        }
+                
+                # Usar el método to_dict() del modelo y agregar datos del show
+                item_dict = item.to_dict()
+                item_dict["show"] = show_data
+                items_data.append(item_dict)
+            
+            # 📈 Calcular metadata de paginación
+            total_pages = (total_count + page_size - 1) // page_size
+            has_next = page < total_pages
+            has_prev = page > 1
+            
+            return {
+                "items": items_data,
+                "total": total_count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev,
+                "filters_applied": filters
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting filtered items: {str(e)}")
+            return {
+                "items": [],
+                "total": 0,
+                "page": 1,
+                "page_size": page_size,
+                "total_pages": 0,
+                "has_next": False,
+                "has_prev": False,
+                "error": str(e)
+            }
 
     def _generate_email_subject(self, decision_data: Dict[str, Any]) -> str:
         """Generate email subject based on decision type"""

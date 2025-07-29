@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Supervisión de Descuentos - IndieHOY</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-pending { @apply bg-yellow-100 text-yellow-800; }
+        .status-approved { @apply bg-green-100 text-green-800; }
+        .status-rejected { @apply bg-red-100 text-red-800; }
+        .status-sent { @apply bg-blue-100 text-blue-800; }
+        
+        .decision-approved { @apply border-l-4 border-green-500 bg-green-50; }
+        .decision-rejected { @apply border-l-4 border-red-500 bg-red-50; }
+        .decision-clarification { @apply border-l-4 border-yellow-500 bg-yellow-50; }
+        
+        /* Unified Navbar Styles */
+        .tab-button.active {
+            @apply bg-indigo-50 border-indigo-200 text-indigo-700;
+        }
+        .tab-button.active i {
+            @apply text-indigo-600;
+        }
+        .tab-button:not(.active) {
+            @apply text-gray-600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        🎯 Supervisión de Descuentos
+                    </h1>
+                    <span class="ml-3 px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                        IndieHOY
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="refreshQueue()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Actualizar
+                    </button>
+                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Salir
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <div id="stats-display" class="text-sm text-gray-600">
+                            Sistema automático activo
+                        </div>
+                        <div class="flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg border border-yellow-200">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span class="text-sm font-medium">Pendientes:</span>
+                            <span class="ml-1 px-2 py-1 text-xs font-bold bg-yellow-200 text-yellow-900 rounded-full" id="total-pending-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Unified Navigation Bar -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-4 sm:px-6 py-4">
+                <nav class="flex flex-wrap gap-2 sm:gap-1" aria-label="Tabs">
+                    <button onclick="filterQueue('approved')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" data-status="approved">
+                        <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                        <span class="hidden sm:inline">Aprobados</span>
+                        <span class="sm:hidden">Aprob.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full" id="count-approved">0</span>
+                    </button>
+                    <button onclick="filterQueue('rejected')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" data-status="rejected">
+                        <i class="fas fa-times-circle mr-2 text-red-500"></i>
+                        <span class="hidden sm:inline">Rechazados</span>
+                        <span class="sm:hidden">Rech.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full" id="count-rejected">0</span>
+                    </button>
+                    <button onclick="filterQueue('sent')" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200 active" data-status="sent">
+                        <i class="fas fa-paper-plane mr-2 text-blue-500"></i>
+                        <span class="hidden sm:inline">Enviados</span>
+                        <span class="sm:hidden">Env.</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full" id="count-sent">0</span>
+                    </button>
+                    <!-- 👥 NUEVA PESTAÑA DE USUARIOS -->
+                    <button onclick="showUsersSection()" class="tab-button flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent hover:bg-gray-50 transition-colors duration-200" data-section="users">
+                        <i class="fas fa-users mr-2 text-purple-500"></i>
+                        <span class="hidden sm:inline">Usuarios</span>
+                        <span class="sm:hidden">Users</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-bold bg-purple-100 text-purple-800 rounded-full" id="count-users">0</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 📋 SECCIÓN DE DESCUENTOS -->
+        <div id="discounts-section">
+            <!-- Filtros Avanzados -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="px-4 sm:px-6 py-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-filter mr-2"></i>Filtros
+                        </h3>
+                        <button onclick="toggleFilters()" class="text-sm text-indigo-600 hover:text-indigo-800">
+                            <i class="fas fa-chevron-down mr-1" id="filter-chevron"></i>
+                            <span id="filter-toggle-text">Mostrar filtros</span>
+                        </button>
+                    </div>
+                    
+                    <div id="filters-section" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <!-- Filtro por Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-envelope mr-1"></i>Email Usuario
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-email" 
+                                placeholder="usuario@ejemplo.com"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Venue -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Venue
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-venue" 
+                                placeholder="Teatro Luna Park"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Show -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-music mr-1"></i>Show
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-show" 
+                                placeholder="Nombre del show"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Fecha Desde -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-calendar mr-1"></i>Desde
+                            </label>
+                            <input 
+                                type="date" 
+                                id="filter-date-from"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Fecha Hasta -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-calendar mr-1"></i>Hasta
+                            </label>
+                            <input 
+                                type="date" 
+                                id="filter-date-to"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                        </div>
+                        
+                        <!-- Items por página -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-list mr-1"></i>Por página
+                            </label>
+                            <select 
+                                id="filter-page-size"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                                <option value="10">10 items</option>
+                                <option value="20" selected>20 items</option>
+                                <option value="50">50 items</option>
+                                <option value="100">100 items</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de acción -->
+                    <div class="flex items-center space-x-3">
+                        <button onclick="applyFilters()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            <i class="fas fa-search mr-2"></i>
+                            Aplicar Filtros
+                        </button>
+                        <button onclick="clearFilters()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="fas fa-times mr-2"></i>
+                            Limpiar
+                        </button>
+                        <div class="text-sm text-gray-500" id="filter-results-info">
+                            <!-- Se actualizará con JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions (solo visible en aprobados) -->
+        <div id="bulk-actions" class="bg-white shadow rounded-lg mb-6 p-4 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="selectAllEmails()" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        <i class="fas fa-check-square mr-1"></i>
+                        Seleccionar todos
+                    </button>
+                    <button onclick="deselectAllEmails()" class="text-sm text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-square mr-1"></i>
+                        Deseleccionar todos
+                    </button>
+                    <span id="selected-count" class="text-sm text-gray-500">0 seleccionados</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="sendSelectedEmails()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Enviar Seleccionados
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paginación Superior -->
+            <div id="pagination-container-top" class="bg-white shadow rounded-lg mb-6 px-4 py-3 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-sm text-gray-700">
+                    <span>Mostrando</span>
+                    <span id="pagination-showing-top">1-20</span>
+                    <span>de</span>
+                    <span id="pagination-total-top">0</span>
+                    <span>resultados</span>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <!-- Página anterior -->
+                    <button 
+                        id="pagination-prev-top" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Anterior
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="pagination-numbers-top" class="flex items-center space-x-1">
+                        <!-- Se generará dinámicamente -->
+                    </div>
+                    
+                    <!-- Página siguiente -->
+                    <button 
+                        id="pagination-next-top" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        Siguiente
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading" class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+
+            <!-- Lista de cola -->
+            <div id="queue-container" class="space-y-6">
+                <!-- Los elementos se cargarán aquí -->
+            </div>
+
+            <!-- Paginación Inferior -->
+            <div id="pagination-container" class="bg-white shadow rounded-lg mt-6 px-4 py-3 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-sm text-gray-700">
+                    <span>Mostrando</span>
+                    <span id="pagination-showing">1-20</span>
+                    <span>de</span>
+                    <span id="pagination-total">0</span>
+                    <span>resultados</span>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <!-- Página anterior -->
+                    <button 
+                        id="pagination-prev" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Anterior
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="pagination-numbers" class="flex items-center space-x-1">
+                        <!-- Se generará dinámicamente -->
+                    </div>
+                    
+                    <!-- Página siguiente -->
+                    <button 
+                        id="pagination-next" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        Siguiente
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center py-12 hidden">
+                <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No hay elementos</h3>
+                <p class="text-gray-500">No se encontraron elementos en esta categoría.</p>
+            </div>
+        </div>
+        <!-- FIN SECCIÓN DE DESCUENTOS -->
+
+        <!-- 👥 SECCIÓN DE USUARIOS -->
+        <div id="users-section" class="hidden">
+            <!-- Filtros de Usuarios -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="px-4 sm:px-6 py-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-users mr-2"></i>Administración de Usuarios
+                        </h3>
+                        <button onclick="refreshUsers()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <!-- Filtro por Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-envelope mr-1"></i>Email
+                            </label>
+                            <input 
+                                type="email" 
+                                id="user-email-filter"
+                                placeholder="Buscar por email..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                oninput="filterUsers()"
+                            >
+                        </div>
+                        
+                        <!-- Filtro por Estado de Pago -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-credit-card mr-1"></i>Estado de Pago
+                            </label>
+                            <select 
+                                id="payment-status-filter"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                onchange="filterUsers()"
+                            >
+                                <option value="">Todos</option>
+                                <option value="current">Al día</option>
+                                <option value="overdue">Pendientes</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Filtro por Ciudad -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Ciudad
+                            </label>
+                            <input 
+                                type="text" 
+                                id="user-city-filter"
+                                placeholder="Buscar por ciudad..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                oninput="filterUsers()"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Usuarios -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 sm:px-6 py-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Lista de Usuarios</h3>
+                        <div class="text-sm text-gray-500">
+                            Total: <span id="users-total-count">0</span> usuarios
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Spinner para usuarios -->
+                    <div id="users-loading" class="text-center py-8 hidden">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <p class="mt-2 text-gray-500">Cargando usuarios...</p>
+                    </div>
+                    
+                    <!-- Contenedor de usuarios -->
+                    <div id="users-container" class="space-y-4">
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
+                    </div>
+                    
+                    <!-- Paginación para usuarios -->
+                    <div id="users-pagination-container" class="mt-6 hidden">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-700">
+                                Mostrando <span id="users-showing-start">0</span> a <span id="users-showing-end">0</span> de <span id="users-showing-total">0</span> usuarios
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="users-prev-btn" onclick="changeUsersPage(-1)" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Anterior
+                                </button>
+                                <div id="users-page-numbers" class="flex space-x-1">
+                                    <!-- Los números de página se generarán dinámicamente -->
+                                </div>
+                                <button id="users-next-btn" onclick="changeUsersPage(1)" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Siguiente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Email Modal -->
+    <div id="edit-email-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">📧 Editar Contenido del Email</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Supervisor:</label>
+                    <input type="text" id="edit-reviewer-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tu nombre" value="Supervisor">
+                </div>
+                
+                <div class="mb-4" id="edit-status-field">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado:</label>
+                    <select id="edit-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <!-- Options will be populated dynamically based on current status -->
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asunto del Email:</label>
+                    <input type="text" id="edit-email-subject" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contenido del Email:</label>
+                    <textarea id="edit-email-content" rows="12" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Contenido del email..."></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notas del supervisor:</label>
+                    <textarea id="edit-supervisor-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Comentarios sobre los cambios realizados..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancelar
+                    </button>
+                    <button onclick="saveEmailEdit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-save mr-1"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'approved';
+        let currentEditItemId = null;
+        
+        // Variables para filtros y paginación
+        let currentPage = 1;
+        let currentPageSize = 20;
+        let currentFilters = {};
+        let totalPages = 1;
+        let totalItems = 0;
+
+        // Variables para gestión de usuarios
+        let currentUsersPage = 1;
+        let currentUsersPageSize = 20;
+        let currentUsersFilters = {};
+        let totalUsersPages = 1;
+        let totalUsers = 0;
+        let currentSection = 'queue'; // 'queue' o 'users'
+
+        // API Base URL
+        const API_BASE = '/api/v1/supervision';
+
+        // 🔐 Verificar autenticación al cargar la página
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/v1/auth/verify');
+                if (!response.ok) {
+                    // Redirigir al login si no está autenticado
+                    window.location.href = '/static/login.html';
+                    return false;
+                }
+                const data = await response.json();
+                console.log('✅ Usuario autenticado:', data.username);
+                return true;
+            } catch (error) {
+                console.error('❌ Error verificando autenticación:', error);
+                window.location.href = '/static/login.html';
+                return false;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                // Cargar estadísticas de descuentos
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update unified navbar counters
+                    document.getElementById('count-approved').textContent = data.stats.approved;
+                    document.getElementById('count-rejected').textContent = data.stats.rejected;
+                    document.getElementById('count-sent').textContent = data.stats.sent;
+                    
+                    // Update total pending counter (approved + rejected)
+                    const totalPending = data.stats.approved + data.stats.rejected;
+                    document.getElementById('total-pending-count').textContent = totalPending;
+                }
+                
+                // ✅ NUEVO: Cargar estadísticas de usuarios
+                const usersResponse = await fetch('/api/v1/users/stats');
+                const usersData = await usersResponse.json();
+                
+                if (usersData.success) {
+                    document.getElementById('count-users').textContent = usersData.stats.total_users;
+                }
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Función loadQueue eliminada - usar loadQueueWithFilters en su lugar
+
+        function renderQueue(items) {
+            const container = document.getElementById('queue-container');
+            
+            if (items.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="bg-white shadow rounded-lg p-6 card-hover transition-all duration-200 decision-${item.decision_type === 'needs_clarification' ? 'clarification' : item.decision_type}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full status-${item.status}">
+                                    ${getStatusText(item.status)}
+                                </span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getDecisionClass(item.decision_type)}">
+                                    ${getDecisionText(item.decision_type)}
+                                </span>
+                                ${item.email_delivery_status ? `
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full ${getEmailDeliveryClass(item.email_delivery_status)}">
+                                        ${getEmailDeliveryIcon(item.email_delivery_status)} ${getEmailDeliveryText(item.email_delivery_status)}
+                                    </span>
+                                ` : ''}
+                                <span class="text-xs text-gray-500">
+                                    ⚡ Sistema Automático
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-1">${item.email_subject}</h3>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-user mr-1"></i> ${item.user_name} (${item.user_email})
+                            </p>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-calendar mr-1"></i> Evento: "${item.show_description}"
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i> ${formatDateTime(item.created_at)}
+                                ${item.confidence_score ? `• Confianza: ${Math.round(item.confidence_score * 100)}%` : ''}
+                                • Tiempo: ${item.processing_time}s
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2 ml-4">
+                            <!-- Botones según estado -->
+                            ${item.status === 'pending' ? `
+                                <button onclick="editEmailWithStatus(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                                <button onclick="approveItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Aprobar
+                                </button>
+                                <button onclick="rejectItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                    <i class="fas fa-times mr-1"></i>
+                                    Rechazar
+                                </button>
+                            ` : item.status === 'approved' ? `
+                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Confirmar y Enviar MAIL
+                                </button>
+                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                            ` : item.status === 'rejected' ? `
+                                <input type="checkbox" class="email-checkbox" data-id="${item.id}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <button onclick="sendEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    Confirmar y Enviar MAIL
+                                </button>
+                                <button onclick="editEmail(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Email Content Preview -->
+                    <div class="border-t pt-4">
+                        <details class="cursor-pointer" open>
+                            <summary class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                                <i class="fas fa-envelope mr-1"></i>
+                                Ver contenido del email
+                            </summary>
+                            <div class="mt-3 p-4 bg-gray-50 rounded-md">
+                                <pre class="text-sm text-gray-700 whitespace-pre-wrap">${item.email_content}</pre>
+                            </div>
+                        </details>
+                    </div>
+
+                    ${item.reasoning ? `
+                        <div class="border-t pt-4 mt-4">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-brain mr-1"></i>
+                                <strong>Razonamiento:</strong> ${item.reasoning}
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    ${item.reviewed_by ? `
+                        <div class="border-t pt-4 mt-4">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-user-check mr-1"></i>
+                                <strong>Revisado por:</strong> ${item.reviewed_by}
+                                ${item.reviewed_at ? `el ${formatDateTime(item.reviewed_at)}` : ''}
+                            </p>
+                            ${item.supervisor_notes ? `<p class="text-sm text-gray-600 mt-1">${item.supervisor_notes}</p>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function filterQueue(status) {
+            currentFilter = status;
+            
+            // Update tab appearance
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                if (btn.dataset.status === status) {
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                    btn.classList.add('border-indigo-500', 'text-indigo-600');
+                } else {
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                }
+            });
+            
+            // Usar filterQueue en lugar de loadQueue
+            filterQueue(status);
+        }
+
+        // 📧 Editar Email
+        async function editEmail(itemId) {
+            try {
+                // Get item details
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const item = data.item;
+                    currentEditItemId = itemId;
+                    
+                    // Populate form
+                    document.getElementById('edit-email-subject').value = item.email_subject || '';
+                    document.getElementById('edit-email-content').value = item.email_content || '';
+                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
+                    
+                    // Show modal
+                    document.getElementById('edit-email-modal').classList.remove('hidden');
+                } else {
+                    alert('Error loading item details');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-email-modal').classList.add('hidden');
+            currentEditItemId = null;
+        }
+
+        // 💾 Guardar cambios de email
+        async function saveEmailEdit() {
+            if (!currentEditItemId) return;
+            
+            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
+            const subject = document.getElementById('edit-email-subject').value.trim();
+            const content = document.getElementById('edit-email-content').value.trim();
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            
+            if (!content) {
+                alert('El contenido del email es obligatorio');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email_subject: subject,
+                        email_content: content,
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeEditModal();
+                    refreshQueue();
+                    // Sin alert molesto
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo guardar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error guardando cambios. Intenta nuevamente.');
+            }
+        }
+
+        // ELIMINADO: función saveAndApprove - ya no se usa
+
+        // ✅ Aprobar directamente (sin modal de confirmación)
+        async function approveItem(itemId) {
+            const reviewer = 'Supervisor'; // Hardcoded por ahora
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'approve',
+                        reviewer: reviewer,
+                        notes: 'Aprobado directamente'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    refreshQueue();
+                    // Sin alert molesto - solo actualizar la vista
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo procesar la aprobación'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+        // ❌ Rechazar directamente (sin modal de confirmación)
+        async function rejectItem(itemId) {
+            const reviewer = 'Supervisor'; // Hardcoded por ahora
+            
+            const notes = prompt('Razón del rechazo (obligatorio):');
+            if (!notes) {
+                alert('Las notas son obligatorias para rechazar una solicitud');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'reject',
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    refreshQueue();
+                    // Sin alert molesto - solo actualizar la vista
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo procesar el rechazo'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión. Intenta nuevamente.');
+            }
+        }
+
+
+
+
+
+        function refreshQueue() {
+            loadStats();
+            loadQueueWithFilters();
+        }
+
+        // Utility functions
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Pendiente',
+                'approved': 'Aprobado',
+                'rejected': 'Rechazado',
+                'sent': 'Enviado'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getDecisionText(decision) {
+            const decisionMap = {
+                'approved': '✅ Aprobado',
+                'rejected': '❌ Rechazado',
+                'needs_clarification': '🤔 Clarificación'
+            };
+            return decisionMap[decision] || decision;
+        }
+
+        function getDecisionClass(decision) {
+            const classMap = {
+                'approved': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'needs_clarification': 'bg-yellow-100 text-yellow-800'
+            };
+            return classMap[decision] || 'bg-gray-100 text-gray-800';
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 🔄 Cambiar estado de un item
+        async function changeStatus(itemId, newStatus) {
+            const reviewer = 'Supervisor';
+            const notes = newStatus === 'rejected' ? prompt('Razón del rechazo:') : 'Cambio de estado';
+            
+            if (newStatus === 'rejected' && !notes) {
+                alert('Las notas son obligatorias para rechazar');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: newStatus === 'approved' ? 'approve' : 'reject',
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    refreshQueue();
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo cambiar el estado'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 📧 Enviar email individual
+        async function sendEmail(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/send`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    refreshQueue();
+                } else {
+                    alert(`Error: ${data.detail || 'No se pudo enviar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // ✏️ Editar email con posibilidad de cambiar estado (para pendientes)
+        async function editEmailWithStatus(itemId) {
+            editEmail(itemId);
+            // El campo de estado ya está visible en el modal
+        }
+
+        // 📋 Funciones de selección múltiple
+        function selectAllEmails() {
+            document.querySelectorAll('.email-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            updateSelectedCount();
+        }
+
+        function deselectAllEmails() {
+            document.querySelectorAll('.email-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const selected = document.querySelectorAll('.email-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = `${selected} seleccionados`;
+        }
+
+        // 📧 Enviar emails seleccionados
+        async function sendSelectedEmails() {
+            const selectedIds = Array.from(document.querySelectorAll('.email-checkbox:checked'))
+                .map(cb => cb.dataset.id);
+            
+            if (selectedIds.length === 0) {
+                alert('Selecciona al menos un email');
+                return;
+            }
+            
+            if (!confirm(`¿Enviar ${selectedIds.length} emails?`)) return;
+            
+            for (const id of selectedIds) {
+                await sendEmail(id);
+            }
+            
+            refreshQueue();
+        }
+
+        // 🔄 Actualizar función de filtrado para mostrar/ocultar bulk actions
+        function filterQueue(status) {
+            currentFilter = status;
+            
+            // Mostrar bulk actions en aprobados y rechazados
+            const bulkActions = document.getElementById('bulk-actions');
+            if (status === 'approved' || status === 'rejected') {
+                bulkActions.classList.remove('hidden');
+                
+                // Cambiar el texto del botón según el status
+                const sendButton = bulkActions.querySelector('button[onclick="sendSelectedEmails()"]');
+                if (sendButton) {
+                    if (status === 'approved') {
+                        sendButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar y Enviar Seleccionados';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700';
+                    } else if (status === 'rejected') {
+                        sendButton.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Confirmar y Enviar Rechazos';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700';
+                    }
+                }
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            const activeTab = document.querySelector(`[data-status="${status}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('border-transparent', 'text-gray-500');
+                activeTab.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+            
+            // Esta función está obsoleta - se reemplazó por filterQueue
+            filterQueue(status);
+        }
+
+        // 💾 Actualizar función de guardar para incluir estado
+        async function saveEmailEdit() {
+            if (!currentEditItemId) return;
+            
+            const reviewer = document.getElementById('edit-reviewer-name').value.trim() || 'Supervisor';
+            const subject = document.getElementById('edit-email-subject').value.trim();
+            const content = document.getElementById('edit-email-content').value.trim();
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            const newStatus = document.getElementById('edit-status').value;
+            
+            if (!content) {
+                alert('El contenido del email es obligatorio');
+                return;
+            }
+            
+            try {
+                // Primero actualizar el contenido
+                const editResponse = await fetch(`${API_BASE}/queue/${currentEditItemId}/edit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email_subject: subject,
+                        email_content: content,
+                        reviewer: reviewer,
+                        notes: notes
+                    })
+                });
+                
+                const editData = await editResponse.json();
+                if (!editData.success) {
+                    alert(`Error: ${editData.detail || 'No se pudo guardar'}`);
+                    return;
+                }
+                
+                // Si cambió el estado, hacer la acción correspondiente
+                const currentItem = await getCurrentItemStatus(currentEditItemId);
+                if (currentItem && currentItem.status !== newStatus) {
+                    await changeStatus(currentEditItemId, newStatus);
+                }
+                
+                closeEditModal();
+                refreshQueue();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 🔍 Obtener estado actual de un item
+        async function getCurrentItemStatus(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                return data.success ? data.item : null;
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
+            }
+        }
+
+        // 📧 Actualizar función de editar para llenar el estado
+        async function editEmail(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const item = data.item;
+                    currentEditItemId = itemId;
+                    
+                    // Llenar campos
+                    document.getElementById('edit-email-subject').value = item.email_subject || '';
+                    document.getElementById('edit-email-content').value = item.email_content || '';
+                    document.getElementById('edit-supervisor-notes').value = item.supervisor_notes || '';
+                    
+                    // Populate status options dynamically (never allow going back to pending)
+                    const statusSelect = document.getElementById('edit-status');
+                    statusSelect.innerHTML = '';
+                    
+                    if (item.status === 'pending') {
+                        statusSelect.innerHTML = `
+                            <option value="pending">⏳ Pendiente</option>
+                            <option value="approved">✅ Aprobado</option>
+                            <option value="rejected">❌ Rechazado</option>
+                        `;
+                    } else if (item.status === 'approved') {
+                        statusSelect.innerHTML = `
+                            <option value="approved">✅ Aprobado</option>
+                            <option value="rejected">❌ Rechazado</option>
+                        `;
+                    } else if (item.status === 'rejected') {
+                        statusSelect.innerHTML = `
+                            <option value="rejected">❌ Rechazado</option>
+                            <option value="approved">✅ Aprobado</option>
+                        `;
+                    }
+                    
+                    statusSelect.value = item.status;
+                    
+                    // Mostrar modal
+                    document.getElementById('edit-email-modal').classList.remove('hidden');
+                } else {
+                    alert('Error loading item details');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // 🔄 Agregar listener para checkboxes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('email-checkbox')) {
+                updateSelectedCount();
+            }
+        });
+
+        // 🚪 Función de logout
+        async function logout() {
+            try {
+                await fetch('/api/v1/auth/logout', { method: 'POST' });
+                window.location.href = '/static/login.html';
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                // Redirigir de todos modos
+                window.location.href = '/static/login.html';
+            }
+        }
+
+        // 🔍 Funciones de filtros
+        function toggleFilters() {
+            const filtersSection = document.getElementById('filters-section');
+            const chevron = document.getElementById('filter-chevron');
+            const toggleText = document.getElementById('filter-toggle-text');
+            
+            if (filtersSection.classList.contains('hidden')) {
+                filtersSection.classList.remove('hidden');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+                toggleText.textContent = 'Ocultar filtros';
+            } else {
+                filtersSection.classList.add('hidden');
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+                toggleText.textContent = 'Mostrar filtros';
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-email').value = '';
+            document.getElementById('filter-venue').value = '';
+            document.getElementById('filter-show').value = '';
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            document.getElementById('filter-page-size').value = '20';
+            
+            currentFilters = {};
+            currentPage = 1;
+            currentPageSize = 20;
+            
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // Recopilar filtros del formulario
+            const filters = {};
+            
+            const email = document.getElementById('filter-email').value.trim();
+            if (email) filters.user_email = email;
+            
+            const venue = document.getElementById('filter-venue').value.trim();
+            if (venue) filters.venue = venue;
+            
+            const show = document.getElementById('filter-show').value.trim();
+            if (show) filters.show_title = show;
+            
+            const dateFrom = document.getElementById('filter-date-from').value;
+            if (dateFrom) filters.date_from = dateFrom;
+            
+            const dateTo = document.getElementById('filter-date-to').value;
+            if (dateTo) filters.date_to = dateTo;
+            
+            // Agregar status actual
+            if (currentFilter) filters.status = currentFilter;
+            
+            // Obtener page size
+            currentPageSize = parseInt(document.getElementById('filter-page-size').value);
+            
+            currentFilters = filters;
+            currentPage = 1; // Reset a primera página
+            
+            loadQueueWithFilters();
+        }
+
+        // 📄 Funciones de paginación
+        function changePage(newPage) {
+            if (newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            loadQueueWithFilters();
+        }
+
+        function updatePagination(paginationData) {
+            // Elementos para paginación inferior
+            const container = document.getElementById('pagination-container');
+            const showingElement = document.getElementById('pagination-showing');
+            const totalElement = document.getElementById('pagination-total');
+            const prevButton = document.getElementById('pagination-prev');
+            const nextButton = document.getElementById('pagination-next');
+            const numbersContainer = document.getElementById('pagination-numbers');
+            
+            // Elementos para paginación superior
+            const containerTop = document.getElementById('pagination-container-top');
+            const showingElementTop = document.getElementById('pagination-showing-top');
+            const totalElementTop = document.getElementById('pagination-total-top');
+            const prevButtonTop = document.getElementById('pagination-prev-top');
+            const nextButtonTop = document.getElementById('pagination-next-top');
+            const numbersContainerTop = document.getElementById('pagination-numbers-top');
+            
+            if (paginationData.total === 0) {
+                container.classList.add('hidden');
+                containerTop.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            containerTop.classList.remove('hidden');
+            
+            // Actualizar información
+            const startItem = ((paginationData.page - 1) * paginationData.page_size) + 1;
+            const endItem = Math.min(paginationData.page * paginationData.page_size, paginationData.total);
+            
+            showingElement.textContent = `${startItem}-${endItem}`;
+            totalElement.textContent = paginationData.total;
+            showingElementTop.textContent = `${startItem}-${endItem}`;
+            totalElementTop.textContent = paginationData.total;
+            
+            // Actualizar botones prev/next
+            prevButton.disabled = !paginationData.has_prev;
+            nextButton.disabled = !paginationData.has_next;
+            prevButtonTop.disabled = !paginationData.has_prev;
+            nextButtonTop.disabled = !paginationData.has_next;
+            
+            // Configurar event listeners para botones prev/next
+            prevButton.onclick = () => changePage(paginationData.page - 1);
+            nextButton.onclick = () => changePage(paginationData.page + 1);
+            prevButtonTop.onclick = () => changePage(paginationData.page - 1);
+            nextButtonTop.onclick = () => changePage(paginationData.page + 1);
+            
+            // Generar números de página para ambas paginaciones
+            function createPageNumbers(container, currentPage, totalPages) {
+                container.innerHTML = '';
+                
+                // Mostrar máximo 5 números de página
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    const button = document.createElement('button');
+                    button.onclick = () => changePage(i);
+                    button.className = `px-3 py-2 text-sm leading-4 font-medium rounded-md ${
+                        i === currentPage 
+                            ? 'bg-indigo-600 text-white' 
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    }`;
+                    button.textContent = i;
+                    container.appendChild(button);
+                }
+            }
+            
+            createPageNumbers(numbersContainer, paginationData.page, paginationData.total_pages);
+            createPageNumbers(numbersContainerTop, paginationData.page, paginationData.total_pages);
+            
+            // Actualizar variables globales
+            totalPages = paginationData.total_pages;
+            totalItems = paginationData.total;
+        }
+
+        // 📊 Función mejorada para cargar cola con filtros
+        async function loadQueueWithFilters() {
+            try {
+                const loading = document.getElementById('loading');
+                const container = document.getElementById('queue-container');
+                const emptyState = document.getElementById('empty-state');
+                
+                loading.classList.remove('hidden');
+                container.innerHTML = '';
+                emptyState.classList.add('hidden');
+                
+                // Construir URL con parámetros
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    page_size: currentPageSize,
+                    ...currentFilters
+                });
+                
+                const response = await fetch(`${API_BASE}/queue?${params}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.items.length > 0) {
+                    renderQueue(data.items);
+                    updatePagination(data);
+                    updateFilterResultsInfo(data);
+                } else {
+                    emptyState.classList.remove('hidden');
+                    document.getElementById('pagination-container').classList.add('hidden');
+                    document.getElementById('pagination-container-top').classList.add('hidden');
+                }
+                
+            } catch (error) {
+                console.error('Error loading queue:', error);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+            }
+        }
+
+        function updateFilterResultsInfo(data) {
+            const info = document.getElementById('filter-results-info');
+            const filtersApplied = Object.keys(data.filters_applied || {}).length;
+            
+            if (filtersApplied > 0) {
+                info.textContent = `${data.total} resultados con ${filtersApplied} filtro(s) aplicado(s)`;
+            } else {
+                info.textContent = `${data.total} resultados totales`;
+            }
+        }
+
+        // Función filterQueue duplicada eliminada - ver filterQueueOriginal más abajo
+
+        // 📧 Funciones para estados de entrega de emails
+        function getEmailDeliveryIcon(deliveryStatus) {
+            if (!deliveryStatus) return '📧'; // No enviado
+            switch (deliveryStatus) {
+                case 'sent': return '🟡'; // Enviado, esperando confirmación
+                case 'delivered': return '✅'; // Entregado exitosamente
+                case 'failed': return '🔄'; // Falló, se puede reintentar
+                case 'bounced': return '❌'; // Rebotó (email inválido)
+                case 'rejected': return '🚫'; // Rechazado por spam/filtros
+                default: return '📧';
+            }
+        }
+
+        function getEmailDeliveryText(deliveryStatus) {
+            if (!deliveryStatus) return 'Sin enviar';
+            switch (deliveryStatus) {
+                case 'sent': return 'Enviado';
+                case 'delivered': return 'Entregado ✓';
+                case 'failed': return 'Error';
+                case 'bounced': return 'Rebotó';
+                case 'rejected': return 'Bloqueado';
+                default: return 'Desconocido';
+            }
+        }
+
+        function getEmailDeliveryClass(deliveryStatus) {
+            if (!deliveryStatus) return 'bg-gray-100 text-gray-800';
+            switch (deliveryStatus) {
+                case 'sent': return 'bg-yellow-100 text-yellow-800';
+                case 'delivered': return 'bg-green-100 text-green-800';
+                case 'failed': return 'bg-orange-100 text-orange-800';
+                case 'bounced': return 'bg-red-100 text-red-800';
+                case 'rejected': return 'bg-purple-100 text-purple-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // Initialize page
+        // ====================================
+        // 👥 FUNCIONES DE GESTIÓN DE USUARIOS
+        // ====================================
+
+        function showUsersSection() {
+            // Cambiar sección activa
+            currentSection = 'users';
+            
+            // Ocultar TODA la sección de descuentos
+            const discountsSection = document.getElementById('discounts-section');
+            if (discountsSection) {
+                discountsSection.classList.add('hidden');
+            }
+            
+            // Ocultar elementos adicionales
+            const elementsToHide = [
+                'pagination-container-top',
+                'pagination-container',
+                'loading'
+            ];
+            
+            elementsToHide.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                    element.classList.add('hidden');
+                }
+            });
+            
+            // Mostrar sección de usuarios
+            document.getElementById('users-section').classList.remove('hidden');
+            
+            // Actualizar estado de pestañas
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-section="users"]').classList.add('active');
+            
+            // Cargar usuarios
+            loadUsers();
+        }
+
+        function hideUsersSection() {
+            currentSection = 'queue';
+            
+            // Ocultar sección de usuarios
+            document.getElementById('users-section').classList.add('hidden');
+            
+            // Ocultar spinner de usuarios si está abierto
+            const usersLoading = document.getElementById('users-loading');
+            if (usersLoading) {
+                usersLoading.classList.add('hidden');
+            }
+            
+            // Mostrar TODA la sección de descuentos
+            const discountsSection = document.getElementById('discounts-section');
+            if (discountsSection) {
+                discountsSection.classList.remove('hidden');
+            }
+        }
+
+        async function loadUsers() {
+            // Mostrar spinner
+            const usersLoading = document.getElementById('users-loading');
+            const usersContainer = document.getElementById('users-container');
+            
+            if (usersLoading) usersLoading.classList.remove('hidden');
+            if (usersContainer) usersContainer.innerHTML = '';
+            
+            try {
+                const params = new URLSearchParams({
+                    page: currentUsersPage,
+                    page_size: currentUsersPageSize,
+                    ...currentUsersFilters
+                });
+                
+                const response = await fetch(`/api/v1/users/list?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderUsers(data.users);
+                    updateUsersPagination(data.pagination);
+                    updateUsersCount(data.pagination.total_items);
+                } else {
+                    console.error('Error loading users:', data.message);
+                    // Mostrar mensaje de error
+                    if (usersContainer) {
+                        usersContainer.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-exclamation-triangle text-red-300 text-6xl mb-4"></i>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">Error al cargar usuarios</h3>
+                                <p class="text-gray-500">${data.message || 'Error desconocido'}</p>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                // Mostrar mensaje de error de conexión
+                if (usersContainer) {
+                    usersContainer.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-wifi text-red-300 text-6xl mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Error de conexión</h3>
+                            <p class="text-gray-500">No se pudo conectar al servidor</p>
+                            <button onclick="loadUsers()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                                Reintentar
+                            </button>
+                        </div>
+                    `;
+                }
+            } finally {
+                // SIEMPRE ocultar spinner
+                if (usersLoading) usersLoading.classList.add('hidden');
+            }
+        }
+
+        function renderUsers(users) {
+            const container = document.getElementById('users-container');
+            
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay usuarios</h3>
+                        <p class="text-gray-500">No se encontraron usuarios con los filtros aplicados.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = users.map(user => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-purple-600"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-medium text-gray-900">${user.name}</h4>
+                                    <p class="text-sm text-gray-500">${user.email}</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="text-sm text-gray-600">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>${user.city || 'N/A'}
+                                        </span>
+                                        <span class="text-sm text-gray-600">
+                                            <i class="fas fa-calendar mr-1"></i>${new Date(user.registration_date).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <!-- Estado de Pago -->
+                            <div class="text-center">
+                                <div class="mb-1">
+                                    ${user.monthly_fee_current 
+                                        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Al día</span>'
+                                        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-exclamation-circle mr-1"></i>Pendiente</span>'
+                                    }
+                                </div>
+                                <p class="text-xs text-gray-500">Estado de Pago</p>
+                            </div>
+                            
+                            <!-- Botón de Acción -->
+                            <button 
+                                onclick="togglePaymentStatus(${user.id}, ${user.monthly_fee_current})"
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
+                                    user.monthly_fee_current 
+                                        ? 'bg-red-600 hover:bg-red-700' 
+                                        : 'bg-green-600 hover:bg-green-700'
+                                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <i class="fas ${user.monthly_fee_current ? 'fa-times' : 'fa-check'} mr-1"></i>
+                                ${user.monthly_fee_current ? 'Marcar Pendiente' : 'Marcar Al Día'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function togglePaymentStatus(userId, currentStatus) {
+            try {
+                const response = await fetch(`/api/v1/users/${userId}/payment-status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        monthly_fee_current: !currentStatus
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Recargar usuarios
+                    loadUsers();
+                    
+                    // Mostrar notificación
+                    const message = !currentStatus ? 'Usuario marcado como al día' : 'Usuario marcado como pendiente';
+                    showNotification(message, 'success');
+                } else {
+                    showNotification(data.message || 'Error al actualizar estado', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating payment status:', error);
+                showNotification('Error al actualizar estado de pago', 'error');
+            }
+        }
+
+        function filterUsers() {
+            const emailFilter = document.getElementById('user-email-filter').value;
+            const paymentFilter = document.getElementById('payment-status-filter').value;
+            const cityFilter = document.getElementById('user-city-filter').value;
+            
+            currentUsersFilters = {};
+            if (emailFilter) currentUsersFilters.email = emailFilter;
+            if (paymentFilter) currentUsersFilters.payment_status = paymentFilter;
+            if (cityFilter) currentUsersFilters.city = cityFilter;
+            
+            currentUsersPage = 1; // Reset to first page
+            loadUsers();
+        }
+
+        function refreshUsers() {
+            loadUsers();
+        }
+
+        function changeUsersPage(direction) {
+            const newPage = currentUsersPage + direction;
+            if (newPage >= 1 && newPage <= totalUsersPages) {
+                currentUsersPage = newPage;
+                loadUsers();
+            }
+        }
+
+        function updateUsersPagination(paginationData) {
+            currentUsersPage = paginationData.current_page;
+            totalUsersPages = paginationData.total_pages;
+            totalUsers = paginationData.total_items;
+            
+            // Mostrar/ocultar contenedor de paginación
+            const paginationContainer = document.getElementById('users-pagination-container');
+            if (totalUsersPages <= 1) {
+                paginationContainer.classList.add('hidden');
+                return;
+            } else {
+                paginationContainer.classList.remove('hidden');
+            }
+            
+            // Actualizar información de elementos mostrados
+            const startItem = (currentUsersPage - 1) * currentUsersPageSize + 1;
+            const endItem = Math.min(currentUsersPage * currentUsersPageSize, totalUsers);
+            
+            document.getElementById('users-showing-start').textContent = startItem;
+            document.getElementById('users-showing-end').textContent = endItem;
+            document.getElementById('users-showing-total').textContent = totalUsers;
+            
+            // Actualizar botones de navegación
+            const prevBtn = document.getElementById('users-prev-btn');
+            const nextBtn = document.getElementById('users-next-btn');
+            
+            prevBtn.disabled = currentUsersPage <= 1;
+            nextBtn.disabled = currentUsersPage >= totalUsersPages;
+            
+            // Generar números de página
+            const pageNumbersContainer = document.getElementById('users-page-numbers');
+            pageNumbersContainer.innerHTML = '';
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentUsersPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalUsersPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = `px-3 py-2 text-sm font-medium rounded-md ${
+                    i === currentUsersPage 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                }`;
+                pageBtn.onclick = () => {
+                    currentUsersPage = i;
+                    loadUsers();
+                };
+                pageNumbersContainer.appendChild(pageBtn);
+            }
+        }
+
+        function updateUsersCount(count) {
+            document.getElementById('count-users').textContent = count;
+            document.getElementById('users-total-count').textContent = count;
+        }
+
+        function showNotification(message, type = 'info') {
+            // Crear notificación temporal
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-info-circle'
+                    } mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        // Función para manejar el cambio de sección antes de filtrar
+        function handleSectionChange(status) {
+            if (currentSection === 'users') {
+                hideUsersSection();
+            }
+            
+            // Asegurar que los spinners estén ocultos
+            const loadingElements = ['loading', 'users-loading'];
+            loadingElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.classList.add('hidden');
+            });
+            
+            // Llamar a la función filterQueue original
+            filterQueueOriginal(status);
+        }
+        
+        // Renombrar la función filterQueue principal
+        function filterQueueOriginal(status) {
+            currentFilter = status;
+            currentFilters = { status }; // Reiniciar filtros con solo el status
+            currentPage = 1;
+            
+            // Mostrar bulk actions en aprobados y rechazados
+            const bulkActions = document.getElementById('bulk-actions');
+            if (status === 'approved' || status === 'rejected') {
+                bulkActions.classList.remove('hidden');
+                
+                // Cambiar el texto del botón según el status
+                const sendButton = bulkActions.querySelector('button[onclick="sendSelectedEmails()"]');
+                if (sendButton) {
+                    if (status === 'approved') {
+                        sendButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar y Enviar Seleccionados';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700';
+                    } else if (status === 'rejected') {
+                        sendButton.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Confirmar y Enviar Rechazos';
+                        sendButton.className = 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700';
+                    }
+                }
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            const activeTab = document.querySelector(`[data-status="${status}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('border-transparent', 'text-gray-500');
+                activeTab.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+            
+            loadQueueWithFilters();
+        }
+        
+        // Alias para mantener compatibilidad
+        const filterQueue = handleSectionChange;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar autenticación primero
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) return;
+            
+            // Asegurar estado inicial limpio
+            currentSection = 'queue';
+            
+            // Asegurar estado inicial correcto
+            const usersSection = document.getElementById('users-section');
+            const usersLoading = document.getElementById('users-loading');
+            const mainLoading = document.getElementById('loading');
+            const discountsSection = document.getElementById('discounts-section');
+            
+            // Ocultar sección de usuarios y spinners
+            if (usersSection) usersSection.classList.add('hidden');
+            if (usersLoading) usersLoading.classList.add('hidden');
+            if (mainLoading) mainLoading.classList.add('hidden');
+            
+            // Asegurar que la sección de descuentos esté visible
+            if (discountsSection) {
+                discountsSection.classList.remove('hidden');
+            }
+            
+            // Cargar dashboard si está autenticado
+            loadStats();
+            filterQueue('sent'); // Cambiar a 'sent' que tiene más datos
+            
+            // Auto-refresh every 30 seconds
+            setInterval(refreshQueue, 30000);
+        });
+
+        // Handle modal closing with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html> 

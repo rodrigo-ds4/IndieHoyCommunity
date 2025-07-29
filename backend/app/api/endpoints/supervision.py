@@ -26,39 +26,61 @@ class EmailEdit(BaseModel):
 
 @router.get("/queue")
 async def get_supervision_queue(
-    limit: int = Query(50, ge=1, le=100),
-    status: str = Query("pending", regex="^(pending|approved|rejected|sent)$"),
+    # Filtros
+    status: Optional[str] = Query(None, regex="^(pending|approved|rejected|sent)$"),
+    user_email: Optional[str] = Query(None),
+    venue: Optional[str] = Query(None),
+    show_title: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None, regex="^\d{4}-\d{2}-\d{2}$"),
+    date_to: Optional[str] = Query(None, regex="^\d{4}-\d{2}-\d{2}$"),
+    # Paginación
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     """
-    📋 Get items from supervision queue
+    📋 Get items from supervision queue with advanced filtering and pagination
     
-    - **limit**: Maximum number of items to return (1-100)
+    **Filtros disponibles:**
     - **status**: Filter by status (pending, approved, rejected, sent)
+    - **user_email**: Filter by user email (partial match)
+    - **venue**: Filter by show venue (partial match)
+    - **show_title**: Filter by show title (partial match)
+    - **date_from**: Filter from date (YYYY-MM-DD)
+    - **date_to**: Filter to date (YYYY-MM-DD)
+    
+    **Paginación:**
+    - **page**: Page number (default: 1)
+    - **page_size**: Items per page (1-100, default: 20)
     """
     try:
         supervision_service = SupervisionQueueService(db)
         
-        if status == "pending":
-            items = supervision_service.get_pending_items(limit)
-        else:
-            # Get items by specific status
-            from app.models.database import SupervisionQueue
-            items = db.query(SupervisionQueue)\
-                     .filter(SupervisionQueue.status == status)\
-                     .order_by(SupervisionQueue.created_at.desc())\
-                     .limit(limit)\
-                     .all()
+        # Construir filtros
+        filters = {}
+        if status:
+            filters['status'] = status
+        if user_email:
+            filters['user_email'] = user_email
+        if venue:
+            filters['venue'] = venue
+        if show_title:
+            filters['show_title'] = show_title
+        if date_from:
+            filters['date_from'] = date_from
+        if date_to:
+            filters['date_to'] = date_to
+        
+        # Obtener items filtrados y paginados
+        result = supervision_service.get_filtered_items(filters, page, page_size)
         
         return {
             "success": True,
-            "items": [item.to_dict() for item in items],
-            "count": len(items),
-            "status_filter": status
+            **result
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching supervision queue: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching queue: {str(e)}")
 
 @router.post("/queue/{item_id}/action")
 async def handle_supervision_action(

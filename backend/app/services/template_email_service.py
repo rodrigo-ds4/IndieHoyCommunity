@@ -149,12 +149,27 @@ class TemplateEmailService:
         subject = self._replace_placeholders(template["subject"], context)
         content = self._replace_placeholders(template["body"], context)
 
+        # Crear mensajes de razonamiento más descriptivos
+        reasoning_messages = {
+            "user_not_found": "El email no se encuentra registrado en nuestra base de miembros de IndieHOY.",
+            "subscription_inactive": "La suscripción del usuario no está activa.",
+            "payment_overdue": "El usuario tiene pagos pendientes. Es necesario estar al día with la cuota mensual para acceder a descuentos.",
+            "duplicate_request": "El usuario ya tiene una solicitud pendiente o aprobada para este mismo evento.",
+            "show_not_found": "El evento solicitado no existe o no está disponible.",
+            "no_discounts_available": "No quedan descuentos disponibles para este evento."
+        }
+        
+        descriptive_reasoning = reasoning_messages.get(
+            reason_code, 
+            f"Solicitud rechazada por: {reason_code}"
+        )
+
         return {
             "email_subject": subject,
             "email_content": content,
             "decision_type": "rejected",
             "show_id": None,
             "confidence_score": 1.0,
-            "reasoning": f"Automatic rejection: {reason_code}",
+            "reasoning": descriptive_reasoning,
             "rejection_reason": reason_code
         } 

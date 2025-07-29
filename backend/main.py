@@ -99,4 +99,17 @@ async def supervision_dashboard():
 async def request_discount_form():
     """Serve discount request form"""
     from fastapi.responses import FileResponse
-    return FileResponse("static/request-discount.html") 
+    return FileResponse("static/request-discount.html")
+
+
+@app.get("/register")
+async def user_registration_form():
+    """Serve user registration form"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/register.html")
+
+@app.get("/users-admin")
+async def serve_users_admin():
+    """Serve users administration page"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/users-admin.html") 

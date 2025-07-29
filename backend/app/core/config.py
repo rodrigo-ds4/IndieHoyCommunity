@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIR: str = "./chroma_db"
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     
+    # === EMAIL CONFIGURATION ===
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@indiehoy.com"
+    SMTP_FROM_NAME: str = "IndieHOY"
+    EMAIL_ENABLED: bool = False  # Set to True to enable real email sending
+    
     class Config:
         env_file = ".env"  # Load from .env file
         case_sensitive = True

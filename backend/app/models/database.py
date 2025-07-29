@@ -40,7 +40,6 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
     # Relationships
-    discount_requests = relationship("DiscountRequest", back_populates="user")
     payment_history = relationship("PaymentHistory", back_populates="user")
 
 
@@ -69,7 +68,6 @@ class Show(Base):
     created_at = Column(DateTime, default=datetime.now)
     
     # Relationships
-    discount_requests = relationship("DiscountRequest", back_populates="show")
     supervision_items = relationship("SupervisionQueue", back_populates="show")
     
     # Method to calculate remaining discounts
@@ -90,32 +88,6 @@ class Show(Base):
         ).count()
         
         return self.max_discounts - reserved_count
-
-
-class DiscountRequest(Base):
-    """Simplified discount request tracking"""
-    __tablename__ = "discount_requests"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    
-    # Foreign keys
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    show_id = Column(Integer, ForeignKey("shows.id"), nullable=True)  # LLM will determine this
-    
-    # Core decision
-    approved = Column(Boolean, nullable=True)  # Agent decision
-    human_approved = Column(Boolean, nullable=True)  # Human approval
-    
-    # Additional flexible data
-    other_data = Column(JSON, nullable=True)  # All other request data (reason, email, etc.)
-    
-    # Timestamps
-    request_date = Column(DateTime, default=datetime.now)  # When request was made
-    agent_approval_date = Column(DateTime, nullable=True)  # When agent decided
-    
-    # Relationships
-    user = relationship("User", back_populates="discount_requests")
-    show = relationship("Show", back_populates="discount_requests")
 
 
 class SupervisionQueue(Base):
@@ -143,6 +115,7 @@ class SupervisionQueue(Base):
     
     # Supervision status
     status = Column(String, default="pending")  # "pending", "approved", "rejected", "sent"
+    email_delivery_status = Column(String, nullable=True)  # NULL, "sent", "delivered", "failed", "bounced", "rejected"
     created_at = Column(DateTime, default=datetime.utcnow)
     reviewed_at = Column(DateTime, nullable=True)
     reviewed_by = Column(String, nullable=True)
@@ -167,6 +140,7 @@ class SupervisionQueue(Base):
             "reasoning": self.reasoning,
             "processing_time": self.processing_time,
             "status": self.status,
+            "email_delivery_status": self.email_delivery_status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
             "reviewed_by": self.reviewed_by,
