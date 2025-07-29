@@ -22418,15 +22418,3 @@ Cancelled
 
 ---
 
-_**User**_
-
-decime como hago un commit de todo lo q cambiamos
-
----
-
-_**Assistant**_
-
-
-
----
-
