@@ -21,7 +21,7 @@ from typing import List, Dict, Any
 import random
 
 # Configuración
-DB_PATH = "/app/data/charro_bot.db"
+DB_PATH = "./data/charro_bot.db"
 
 class DatabasePopulator:
     def __init__(self, db_path: str):
@@ -142,17 +142,18 @@ class DatabasePopulator:
             }
         ]
         
-        for i, user_data in enumerate(users_data, 1):
+        for user_data in users_data:
             registration_date = datetime.now() - timedelta(days=random.randint(30, 365))
             
+            # No especificar ID, dejar que SQLite auto-incremente
             self.cursor.execute("""
                 INSERT INTO users (
-                    id, name, email, dni, phone, city, registration_date,
+                    name, email, dni, phone, city, registration_date,
                     how_did_you_find_us, favorite_music_genre, subscription_active,
                     monthly_fee_current, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                i, user_data["name"], user_data["email"], user_data["dni"],
+                user_data["name"], user_data["email"], user_data["dni"],
                 user_data["phone"], user_data["city"], registration_date.isoformat(),
                 user_data["how_did_you_find_us"], user_data["favorite_music_genre"],
                 user_data["subscription_active"], user_data["monthly_fee_current"],
@@ -166,78 +167,253 @@ class DatabasePopulator:
         """Poblar shows indies"""
         print("🎵 Poblando shows...")
         
+        # URL por defecto para shows sin imagen específica
+        default_img = "https://indiehoy.com/wp-content/uploads/2024/05/comunidad-logo-blanco-1.png"
+        today = datetime.now()
+        
         shows_data = [
+            # AGOSTO 2025
             {
-                "code": "TINI2024",
-                "title": "Tini - Cupido Tour",
-                "artist": "Tini Stoessel",
-                "venue": "Movistar Arena",
-                "show_date": datetime(2024, 9, 15, 21, 0),
-                "max_discounts": 20,
-                "ticketing_link": "https://www.ticketek.com.ar/tini-cupido-tour",
-                "other_data": {
-                    "discount_percentage": 15,
-                    "instructions": "Seguí los siguientes pasos:\n1. Ingresá a Ticketek con tu cuenta\n2. Seleccioná las entradas para Tini - Cupido Tour\n3. En el checkout, ingresá el código de descuento\n4. Completá la compra\n\n¡Disfrutá del show!",
-                    "category": "Pop Nacional",
-                    "age_restriction": "ATP"
-                }
-            },
-            {
-                "code": "BANDALOS2024",
-                "title": "Bandalos Chinos en vivo",
+                "code": "BANDALOS2025_CBA",
+                "title": "Bandalos Chinos",
                 "artist": "Bandalos Chinos",
-                "venue": "Niceto Club",
-                "show_date": datetime(2024, 8, 22, 22, 30),
-                "max_discounts": 15,
-                "ticketing_link": "https://www.plateanet.com/bandalos-chinos",
+                "venue": "Estadio Atenas",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/07/bandalos-chinos-en-cordoba-capital-2025-atenas-450x563.jpg",
+                "show_date": datetime(2025, 8, 1, 21, 0),
+                "max_discounts": 0,  # Beneficio Agotado
+                "ticketing_link": "https://www.ticketek.com.ar/bandalos-chinos-cordoba",
                 "other_data": {
-                    "discount_percentage": 20,
-                    "instructions": "Seguí los siguientes pasos:\n1. Comprá tu entrada en Plateanet\n2. Usá el código antes del pago\n3. Llegá temprano, el venue es íntimo\n4. Llevá efectivo para bebidas\n\n¡Nos vemos en el show!",
+                    "discount_percentage": 0,
+                    "discount_type": "Beneficio Agotado",
+                    "instructions": "Lamentablemente los descuentos para este show se han agotado.",
                     "category": "Indie Rock",
-                    "age_restriction": "+16"
+                    "city": "Córdoba"
                 }
             },
             {
-                "code": "MIRANDA2024",
-                "title": "Miranda! - Fuerte Tour",
-                "artist": "Miranda!",
-                "venue": "Teatro Flores",
-                "show_date": datetime(2024, 10, 5, 20, 0),
-                "max_discounts": 12,
-                "ticketing_link": "https://www.tuentrada.com/miranda-fuerte-tour",
+                "code": "MAITE2025",
+                "title": "Maite Fleischmann",
+                "artist": "Maite Fleischmann", 
+                "venue": "Roseti",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/07/maite-450x450.jpg",
+                "show_date": datetime(2025, 8, 1, 22, 0),
+                "max_discounts": 50,  # Gratis con Comunidad
+                "ticketing_link": "https://www.plateanet.com/maite-fleischmann",
                 "other_data": {
-                    "discount_percentage": 25,
-                    "instructions": "Seguí los siguientes pasos:\n1. Entrá a TuEntrada.com\n2. Buscá 'Miranda! - Fuerte Tour'\n3. Aplicá tu código de descuento\n4. Elegí tu ubicación preferida\n5. Finalizá la compra\n\n¡Te esperamos para cantar todos los hits!",
-                    "category": "Electropop",
-                    "age_restriction": "ATP"
+                    "discount_percentage": 100,
+                    "discount_type": "Gratis con Comunidad",
+                    "instructions": "¡Entrada completamente gratuita para miembros de IndieHOY Comunidad!",
+                    "category": "Indie Folk",
+                    "city": "Buenos Aires"
                 }
             },
             {
-                "code": "CONOCIENDO2024",
-                "title": "Conociendo Rusia - Cabildo Tour",
-                "artist": "Conociendo Rusia",
-                "venue": "Uniclub",
-                "show_date": datetime(2024, 11, 12, 21, 30),
-                "max_discounts": 8,
-                "ticketing_link": "https://www.tickethoy.com/conociendo-rusia",
+                "code": "BHAVI2025_CBA",
+                "title": "Bhavi",
+                "artist": "Bhavi",
+                "venue": "Estadio Kempes",
+                "img": default_img,
+                "show_date": datetime(2025, 8, 7, 21, 0),
+                "max_discounts": 25,
+                "ticketing_link": "https://www.ticketek.com.ar/bhavi-cordoba",
                 "other_data": {
                     "discount_percentage": 30,
-                    "instructions": "Seguí los siguientes pasos:\n1. Ingresá a TicketHoy\n2. Seleccioná Conociendo Rusia - Cabildo Tour\n3. Elegí tu entrada (campo o platea)\n4. Aplicá el código en 'Promociones'\n5. Completá el pago\n\n¡Preparate para una noche increíble!",
-                    "category": "Indie Nacional",
-                    "age_restriction": "+18"
+                    "discount_type": "30% OFF",
+                    "instructions": "Aplicá tu código de descuento en el checkout para obtener 30% OFF.",
+                    "category": "Trap/Hip Hop",
+                    "city": "Córdoba"
+                }
+            },
+            {
+                "code": "LAVALENTI2025",
+                "title": "La Valenti",
+                "artist": "La Valenti",
+                "venue": "Konex",
+                "img": default_img,
+                "show_date": datetime(2025, 8, 8, 22, 0),
+                "max_discounts": 30,
+                "ticketing_link": "https://www.tuentrada.com/la-valenti",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Descuento del 20% disponible para miembros de la comunidad.",
+                    "category": "Indie Pop",
+                    "city": "Buenos Aires"
+                }
+            },
+            {
+                "code": "NICOLASJAAR2025",
+                "title": "Nicolás Jaar",
+                "artist": "Nicolás Jaar",
+                "venue": "Deseo",
+                "img": default_img,
+                "show_date": datetime(2025, 8, 18, 23, 0),
+                "max_discounts": 20,
+                "ticketing_link": "https://www.plateanet.com/nicolas-jaar",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Show de música electrónica experimental. 20% OFF para la comunidad.",
+                    "category": "Electrónica Experimental",
+                    "city": "Buenos Aires"
+                }
+            },
+            
+            # SEPTIEMBRE 2025
+            {
+                "code": "CLUBZ2025",
+                "title": "Clubz",
+                "artist": "Clubz",
+                "venue": "Niceto Club",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/07/clubz-indiehoy-450x562.jpg",
+                "show_date": datetime(2025, 9, 25, 22, 30),
+                "max_discounts": 40,
+                "ticketing_link": "https://www.plateanet.com/clubz",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Descuento del 20% en Niceto Club para este show imperdible.",
+                    "category": "Electro Pop",
+                    "city": "Buenos Aires"
+                }
+            },
+            {
+                "code": "ARBOL2025_TEMP",
+                "title": "Árbol",
+                "artist": "Árbol",
+                "venue": "Auditorio Sur",
+                "img": default_img,
+                "show_date": datetime(2025, 9, 13, 21, 0),
+                "max_discounts": 15,
+                "ticketing_link": "https://www.tuentrada.com/arbol",
+                "other_data": {
+                    "discount_percentage": 50,
+                    "discount_type": "50% OFF",
+                    "instructions": "¡Descuento especial del 50% para este show de rock nacional!",
+                    "category": "Rock Nacional",
+                    "city": "Temperley"
+                }
+            },
+            
+            # OCTUBRE 2025
+            {
+                "code": "LICHI2025",
+                "title": "Lichi",
+                "artist": "Lichi",
+                "venue": "Niceto Club",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/05/lucy-patane-lichi-rosario-450x563.jpg",
+                "show_date": datetime(2025, 10, 5, 21, 30),
+                "max_discounts": 35,
+                "ticketing_link": "https://www.plateanet.com/lichi",
+                "other_data": {
+                    "discount_percentage": 30,
+                    "discount_type": "30% OFF",
+                    "instructions": "Show íntimo en Niceto Club con 30% OFF para la comunidad.",
+                    "category": "Indie Folk",
+                    "city": "Buenos Aires"
+                }
+            },
+            {
+                "code": "SHAILA2025",
+                "title": "Shaila",
+                "artist": "Shaila",
+                "venue": "Obras",
+                "img": default_img,
+                "show_date": datetime(2025, 10, 11, 20, 0),
+                "max_discounts": 25,
+                "ticketing_link": "https://www.ticketek.com.ar/shaila",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Shaila en el Estadio Obras con 20% OFF.",
+                    "category": "Punk Rock",
+                    "city": "Buenos Aires"
+                }
+            },
+            {
+                "code": "RUSOWSKY2025",
+                "title": "Rusowsky",
+                "artist": "Rusowsky",
+                "venue": "C Art Media",
+                "img": default_img,
+                "show_date": datetime(2025, 10, 24, 22, 0),
+                "max_discounts": 30,
+                "ticketing_link": "https://www.tuentrada.com/rusowsky",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Show de indie pop español con 20% OFF.",
+                    "category": "Indie Pop",
+                    "city": "Buenos Aires"
+                }
+            },
+            
+            # NOVIEMBRE 2025
+            {
+                "code": "FMK2025",
+                "title": "FMK",
+                "artist": "FMK",
+                "venue": "Niceto Club",
+                "img": default_img,
+                "show_date": datetime(2025, 11, 30, 22, 0),
+                "max_discounts": 40,
+                "ticketing_link": "https://www.plateanet.com/fmk",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "FMK en Niceto Club con 20% OFF para la comunidad.",
+                    "category": "Reggaeton/Trap",
+                    "city": "Buenos Aires"
+                }
+            },
+            
+            # EVENTOS ESPECIALES CON IMAGEN
+            {
+                "code": "OPERACIONES2025",
+                "title": "Operaciones Culturales",
+                "artist": "Las Tussi, El Club Audiovisual y más",
+                "venue": "Niceto Club",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/07/operacionesculturales-450x562.jpg",
+                "show_date": today,
+                "max_discounts": 50,
+                "ticketing_link": "https://www.plateanet.com/operaciones-culturales",
+                "other_data": {
+                    "discount_percentage": 20,
+                    "discount_type": "20% OFF",
+                    "instructions": "Evento cultural múltiple con varios artistas y 20% OFF.",
+                    "category": "Evento Cultural",
+                    "city": "Buenos Aires"
+                }
+            },
+            {
+                "code": "ABRILSOSA2025",
+                "title": "Abril Sosa",
+                "artist": "Abril Sosa",
+                "venue": "Centro Cultural de Quilmes",
+                "img": "https://indiehoy.com/wp-content/uploads/2025/06/abril-sosa-quilmes-450x563.jpg",
+                "show_date": today,
+                "max_discounts": 25,
+                "ticketing_link": "https://www.tuentrada.com/abril-sosa",
+                "other_data": {
+                    "discount_percentage": 25,
+                    "discount_type": "25% OFF", 
+                    "instructions": "Show íntimo de Abril Sosa en Quilmes con 25% OFF.",
+                    "category": "Indie Folk",
+                    "city": "Quilmes"
                 }
             }
         ]
         
-        for i, show_data in enumerate(shows_data, 1):
+        for show_data in shows_data:
+            # No especificar ID, dejar que SQLite auto-incremente
             self.cursor.execute("""
                 INSERT INTO shows (
-                    id, code, title, artist, venue, show_date, max_discounts,
+                    code, title, artist, venue, img, show_date, max_discounts,
                     ticketing_link, other_data, active, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                i, show_data["code"], show_data["title"], show_data["artist"],
-                show_data["venue"], show_data["show_date"].isoformat(),
+                show_data["code"], show_data["title"], show_data["artist"],
+                show_data["venue"], show_data["img"], show_data["show_date"].isoformat(),
                 show_data["max_discounts"], show_data["ticketing_link"],
                 json.dumps(show_data["other_data"]), True, datetime.now().isoformat()
             ))
@@ -300,13 +476,14 @@ El equipo de IndieHOY 🎶"""
             }
         ]
         
-        for i, template_data in enumerate(templates_data, 1):
+        for template_data in templates_data:
+            # No especificar ID, dejar que SQLite auto-incremente
             self.cursor.execute("""
                 INSERT INTO email_templates (
-                    id, template_name, subject, body, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    template_name, subject, body, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?)
             """, (
-                i, template_data["template_name"], template_data["subject"],
+                template_data["template_name"], template_data["subject"],
                 template_data["body"], datetime.now().isoformat(),
                 datetime.now().isoformat()
             ))
@@ -327,34 +504,53 @@ El equipo de IndieHOY 🎶"""
             "failed"  # Falló
         ]
         
+        # 🔄 Obtener IDs reales de usuarios y shows creados (ahora auto-incrementados)
+        self.cursor.execute("SELECT id FROM users ORDER BY id LIMIT 7")
+        user_ids = [row[0] for row in self.cursor.fetchall()]
+        
+        self.cursor.execute("SELECT id FROM shows ORDER BY id LIMIT 4") 
+        show_ids = [row[0] for row in self.cursor.fetchall()]
+        
+        if len(user_ids) < 7 or len(show_ids) < 4:
+            print(f"   ⚠️ No hay suficientes usuarios ({len(user_ids)}/7) o shows ({len(show_ids)}/4)")
+            return
+        
         requests_data = [
             # 5 APROBADOS
-            {"user_id": 1, "show_id": 1, "status": "approved", "delivery": "delivered"},
-            {"user_id": 2, "show_id": 2, "status": "approved", "delivery": "sent"},
-            {"user_id": 3, "show_id": 3, "status": "approved", "delivery": None},
-            {"user_id": 4, "show_id": 4, "status": "approved", "delivery": "delivered"},
-            {"user_id": 5, "show_id": 1, "status": "approved", "delivery": "bounced"},
+            {"user_id": user_ids[0], "show_id": show_ids[0], "status": "approved", "delivery": "delivered"},
+            {"user_id": user_ids[1], "show_id": show_ids[1], "status": "approved", "delivery": "sent"},
+            {"user_id": user_ids[2], "show_id": show_ids[2], "status": "approved", "delivery": None},
+            {"user_id": user_ids[3], "show_id": show_ids[3], "status": "approved", "delivery": "delivered"},
+            {"user_id": user_ids[4], "show_id": show_ids[0], "status": "approved", "delivery": "bounced"},
             
             # 1 RECHAZADO
-            {"user_id": 6, "show_id": 2, "status": "rejected", "delivery": "sent"},
+            {"user_id": user_ids[5], "show_id": show_ids[1], "status": "rejected", "delivery": "sent"},
             
             # 4 ENVIADOS con diferentes resultados
-            {"user_id": 1, "show_id": 3, "status": "sent", "delivery": "delivered"},
-            {"user_id": 2, "show_id": 4, "status": "sent", "delivery": "failed"},
-            {"user_id": 3, "show_id": 1, "status": "sent", "delivery": "bounced"},
-            {"user_id": 7, "show_id": 2, "status": "sent", "delivery": "delivered"}
+            {"user_id": user_ids[0], "show_id": show_ids[2], "status": "sent", "delivery": "delivered"},
+            {"user_id": user_ids[1], "show_id": show_ids[3], "status": "sent", "delivery": "failed"},
+            {"user_id": user_ids[2], "show_id": show_ids[0], "status": "sent", "delivery": "bounced"},
+            {"user_id": user_ids[6], "show_id": show_ids[1], "status": "sent", "delivery": "delivered"}
         ]
         
-        for i, req_data in enumerate(requests_data, 1):
+        for req_data in requests_data:
             request_id = str(uuid.uuid4())
             discount_code = f"INDIE{random.randint(1000, 9999)}"
             
-            # Obtener datos del usuario y show
+            # Obtener datos del usuario y show por ID (ahora auto-incrementados)
             self.cursor.execute("SELECT name, email FROM users WHERE id = ?", (req_data["user_id"],))
-            user_name, user_email = self.cursor.fetchone()
+            user_row = self.cursor.fetchone()
+            if not user_row:
+                print(f"   ⚠️ Usuario ID {req_data['user_id']} no encontrado, saltando...")
+                continue
+            user_name, user_email = user_row
             
             self.cursor.execute("SELECT title, artist FROM shows WHERE id = ?", (req_data["show_id"],))
-            show_title, show_artist = self.cursor.fetchone()
+            show_row = self.cursor.fetchone()
+            if not show_row:
+                print(f"   ⚠️ Show ID {req_data['show_id']} no encontrado, saltando...")
+                continue
+            show_title, show_artist = show_row
             
             # Determinar tipo de decisión y contenido del email
             if req_data["status"] == "approved":
@@ -387,16 +583,17 @@ IndieHOY 🎶"""
             created_at = datetime.now() - timedelta(days=random.randint(1, 30))
             reviewed_at = created_at + timedelta(hours=random.randint(1, 48)) if req_data["status"] != "pending" else None
             
+            # No especificar ID, dejar que SQLite auto-incremente
             self.cursor.execute("""
                 INSERT INTO supervision_queue (
-                    id, request_id, user_email, user_name, show_description,
+                    request_id, user_email, user_name, show_description,
                     decision_type, decision_source, show_id, email_subject,
                     email_content, confidence_score, reasoning, processing_time,
                     status, email_delivery_status, created_at, reviewed_at,
                     reviewed_by, supervisor_notes
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                i, request_id, user_email, user_name, f"{show_title} - {show_artist}",
+                request_id, user_email, user_name, f"{show_title} - {show_artist}",
                 decision_type, "prefilter_template", req_data["show_id"],
                 email_subject, email_content, 0.95, 
                 f"Usuario válido, show disponible, {decision_type}",

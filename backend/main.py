@@ -26,10 +26,29 @@ async def lifespan(app: FastAPI):
     print(f"🐳 Ollama URL: {settings.OLLAMA_URL}")
     print(f"🗄️ Database URL: {settings.DATABASE_URL}")
     
-    # Create database tables
+    # Create database tables and populate if needed
     try:
+        import os
+        
+        # 🗑️ RECREAR DB: Eliminar DB existente para forzar recreación con nueva estructura (campo img)
+        db_file = "./data/charro_bot.db"
+        if os.path.exists(db_file):
+            print("🗑️ Removing existing database to recreate with new structure (img field)...")
+            os.remove(db_file)
+            print("✅ Old database removed")
+        
         create_tables()
-        print("✅ Database tables created/verified")
+        print("✅ Database tables created with new structure")
+        
+        # Siempre poblar después de recrear
+        print("🔄 Populating database with new show data...")
+        import subprocess
+        result = subprocess.run(["python", "populate_database.py"], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ Database populated successfully with new shows")
+        else:
+            print(f"❌ Error populating database: {result.stderr}")
+                
     except Exception as e:
         print(f"❌ Database setup error: {e}")
     

@@ -107,11 +107,11 @@ class SupervisionQueueService:
             return False
 
     def mark_as_sent(self, item_id: int) -> bool:
-        """Mark an approved or rejected item as sent"""
+        """Mark a reviewed item as sent"""
         try:
             item = self.db.query(SupervisionQueue).filter(SupervisionQueue.id == item_id).first()
-            if not item or item.status not in ["approved", "rejected"]:
-                logger.error(f"❌ Item {item_id} not found or not ready to send")
+            if not item or item.status != "pending" or item.reviewed_at is None:
+                logger.error(f"❌ Item {item_id} not found or not ready to send (must be pending and reviewed)")
                 return False
             
             item.status = "sent"
@@ -128,17 +128,28 @@ class SupervisionQueueService:
     def get_queue_stats(self) -> Dict[str, int]:
         """Get supervision queue statistics"""
         try:
+            from sqlalchemy import and_
+            
             stats = {
-                "pending": self.db.query(SupervisionQueue).filter(SupervisionQueue.status == "pending").count(),
-                "approved": self.db.query(SupervisionQueue).filter(SupervisionQueue.status == "approved").count(),
-                "rejected": self.db.query(SupervisionQueue).filter(SupervisionQueue.status == "rejected").count(),
+                "approved_pending": self.db.query(SupervisionQueue).filter(
+                    and_(
+                        SupervisionQueue.decision_type == "approved",
+                        SupervisionQueue.status == "pending"
+                    )
+                ).count(),
+                "rejected_pending": self.db.query(SupervisionQueue).filter(
+                    and_(
+                        SupervisionQueue.decision_type == "rejected", 
+                        SupervisionQueue.status == "pending"
+                    )
+                ).count(),
                 "sent": self.db.query(SupervisionQueue).filter(SupervisionQueue.status == "sent").count()
             }
             stats["total"] = sum(stats.values())
             return stats
         except Exception as e:
             logger.error(f"❌ Error getting queue stats: {str(e)}")
-            return {"pending": 0, "approved": 0, "rejected": 0, "sent": 0, "total": 0}
+            return {"approved_pending": 0, "rejected_pending": 0, "sent": 0, "total": 0}
 
     def get_filtered_items(self, filters: dict, page: int = 1, page_size: int = 20) -> dict:
         """
@@ -167,6 +178,10 @@ class SupervisionQueueService:
             # Filtro por status
             if filters.get('status'):
                 conditions.append(SupervisionQueue.status == filters['status'])
+            
+            # Filtro por decision_type
+            if filters.get('decision_type'):
+                conditions.append(SupervisionQueue.decision_type == filters['decision_type'])
             
             # Filtro por email del usuario
             if filters.get('user_email'):

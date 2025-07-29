@@ -21,6 +21,7 @@ class SupervisionAction(BaseModel):
 class EmailEdit(BaseModel):
     email_subject: str
     email_content: str
+    decision_type: Optional[str] = None  # "approved" or "rejected"
     reviewer: str
     notes: Optional[str] = None
 
@@ -28,6 +29,7 @@ class EmailEdit(BaseModel):
 async def get_supervision_queue(
     # Filtros
     status: Optional[str] = Query(None, regex="^(pending|approved|rejected|sent)$"),
+    decision_type: Optional[str] = Query(None, regex="^(approved|rejected)$"),
     user_email: Optional[str] = Query(None),
     venue: Optional[str] = Query(None),
     show_title: Optional[str] = Query(None),
@@ -60,6 +62,8 @@ async def get_supervision_queue(
         filters = {}
         if status:
             filters['status'] = status
+        if decision_type:
+            filters['decision_type'] = decision_type
         if user_email:
             filters['user_email'] = user_email
         if venue:
@@ -168,9 +172,9 @@ async def get_supervision_stats(db: Session = Depends(get_db)):
             "success": True,
             "stats": stats,
             "queue_health": {
-                "pending_items": stats["pending"],
-                "approval_rate": round((stats["approved"] / max(stats["total"], 1)) * 100, 1),
-                "total_processed": stats["approved"] + stats["rejected"]
+                "pending_items": stats["approved_pending"] + stats["rejected_pending"],
+                "approval_rate": round((stats["approved_pending"] / max(stats["approved_pending"] + stats["rejected_pending"], 1)) * 100, 1),
+                "total_processed": stats["sent"]
             }
         }
         
@@ -231,6 +235,8 @@ async def edit_email_content(
         # Update the email content
         item.email_subject = edit_data.email_subject
         item.email_content = edit_data.email_content
+        if edit_data.decision_type:
+            item.decision_type = edit_data.decision_type
         item.supervisor_notes = edit_data.notes
         item.reviewed_by = edit_data.reviewer
         item.reviewed_at = datetime.utcnow()

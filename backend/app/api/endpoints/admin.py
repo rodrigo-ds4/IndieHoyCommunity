@@ -4,7 +4,7 @@ For development and testing purposes
 """
 
 from fastapi import APIRouter, HTTPException
-from app.data.sample_data import create_sample_data, clear_sample_data
+# from app.data.sample_data import create_sample_data, clear_sample_data
 
 router = APIRouter()
 
@@ -12,24 +12,16 @@ router = APIRouter()
 @router.post("/create-sample-data")
 async def create_test_data():
     """Create sample users and shows for testing the LangChain agent"""
-    try:
-        create_sample_data()
-        return {
-            "message": "Sample data created successfully",
-            "note": "Check console for details about test scenarios"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "message": "Admin endpoints temporarily disabled for Railway deployment",
+        "note": "This feature will be re-enabled after deployment"
+    }
 
 
 @router.delete("/clear-sample-data")
 async def clear_test_data():
     """Clear all sample data"""
-    try:
-        clear_sample_data()
-        return {"message": "Sample data cleared successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Admin endpoints temporarily disabled for Railway deployment"}
 
 
 @router.get("/test-scenarios")

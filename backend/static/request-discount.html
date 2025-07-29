@@ -23,7 +23,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen gradient-bg">
+<body class="min-h-screen bg-gray-100">
     <!-- Simple Dashboard Link -->
     <div class="max-w-4xl mx-auto pt-6 px-4 sm:px-6 lg:px-8">
         <div class="text-right mb-6">
@@ -34,15 +34,15 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Simple Title -->
-        <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold text-white mb-2">
-                🎵 Solicitar Descuento
-            </h2>
+    <!-- Logo Comunidad -->
+    <div class="bg-black w-full py-8 mb-0">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <img src="https://indiehoy.com/wp-content/uploads/2024/05/comunidad-logo-blanco-1.png" alt="Comunidad IndieHOY" class="h-16 mx-auto">
         </div>
+    </div>
 
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <!-- Form Container -->
         <div class="form-container bg-white rounded-2xl p-8 md:p-12">
             <form id="discount-form" class="space-y-6">
@@ -111,9 +111,14 @@
                     <!-- Selected Show Display -->
                     <div id="selected-show" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                         <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium text-indigo-900" id="selected-show-title"></div>
-                                <div class="text-sm text-indigo-700" id="selected-show-details"></div>
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <img id="selected-show-img" src="" alt="" class="w-12 h-12 rounded-lg object-cover">
+                                </div>
+                                <div>
+                                    <div class="font-medium text-indigo-900" id="selected-show-title"></div>
+                                    <div class="text-sm text-indigo-700" id="selected-show-details"></div>
+                                </div>
                             </div>
                             <button type="button" onclick="clearSelection()" class="text-indigo-600 hover:text-indigo-800">
                                 <i class="fas fa-times"></i>
@@ -145,23 +150,7 @@
             </form>
         </div>
 
-        <!-- Footer Info -->
-        <div class="mt-12 text-center text-white text-opacity-80">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h4 class="font-medium mb-2">🕐 Tiempo de Respuesta</h4>
-                    <p class="text-sm">Respuesta automática en menos de 5 segundos</p>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-2">👥 Supervisión Humana</h4>
-                    <p class="text-sm">Todas las solicitudes son revisadas por nuestro equipo</p>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-2">📧 Notificaciones</h4>
-                    <p class="text-sm">Recibirás un email con la decisión y detalles</p>
-                </div>
-            </div>
-        </div>
+
     </main>
 
     <script>
@@ -299,18 +288,25 @@
 
                     const detailsHtml = isAvailable
                         ? `<div class="text-xs text-indigo-600 mt-1">
-                               <i class="fas fa-tag mr-1"></i>
-                               $${show.price} • ${show.remaining_discounts} descuentos disponibles
+                               <i class="fas fa-check-circle mr-1"></i>
+                               ${show.discount_status}
                            </div>`
                         : `<div class="text-xs text-red-600 font-medium mt-1">
                                <i class="fas fa-times-circle mr-1"></i>
-                               Descuentos Agotados
+                               Descuentos agotados
                            </div>`;
 
                     item.innerHTML = `
-                        <div class="font-medium text-gray-900">${show.title} - ${show.artist}</div>
-                        <div class="text-sm text-gray-600">${show.venue} - ${show.show_date}</div>
-                        ${detailsHtml}
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <img src="${show.img}" alt="${show.title}" class="w-12 h-12 rounded-lg object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">${show.title} - ${show.artist}</div>
+                                <div class="text-sm text-gray-600">${show.venue} - ${show.show_date}</div>
+                                ${detailsHtml}
+                            </div>
+                        </div>
                     `;
                     resultsContainer.appendChild(item);
                 });
@@ -328,10 +324,12 @@
             // Set hidden field
             document.getElementById('selected_show_id').value = show.id;
             
-            // Show selected show info
+            // Show selected show info con imagen
             const selectedContainer = document.getElementById('selected-show');
+            document.getElementById('selected-show-img').src = show.img;
+            document.getElementById('selected-show-img').alt = show.title;
             document.getElementById('selected-show-title').textContent = `${show.title} - ${show.artist}`;
-            document.getElementById('selected-show-details').textContent = `${show.venue} • ${show.show_date} • $${show.price} • ${show.remaining_discounts} descuentos disponibles`;
+            document.getElementById('selected-show-details').textContent = show.simple_info;
             selectedContainer.classList.remove('hidden');
             
             // Hide search results

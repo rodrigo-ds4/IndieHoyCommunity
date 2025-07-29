@@ -34,32 +34,30 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
+    <header class="shadow-sm border-b" style="background: linear-gradient(135deg, #5DADE2 0%, #85C1E9 100%);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-900">
+                    <img src="https://indiehoy.com/wp-content/uploads/2024/09/logo-indiehoy-1.webp" alt="IndieHOY" class="h-8 w-auto mr-4">
+                    <h1 class="text-2xl font-bold text-white">
                         🎯 Supervisión de Descuentos
                     </h1>
-                    <span class="ml-3 px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
-                        IndieHOY
-                    </span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button onclick="refreshQueue()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button onclick="refreshQueue()" class="inline-flex items-center px-3 py-2 border border-white shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-transparent hover:bg-white hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-colors">
                         <i class="fas fa-sync-alt mr-2"></i>
                         Actualizar
                     </button>
-                    <span class="text-sm text-gray-500">Sistema automático activo</span>
-                    <div class="flex items-center space-x-2 bg-orange-50 px-3 py-1 rounded-full">
-                        <i class="fas fa-clock text-orange-600"></i>
-                        <span class="text-sm font-medium text-orange-800">
+                    <span class="text-sm text-white opacity-90">Sistema automático activo</span>
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        <i class="fas fa-clock text-white"></i>
+                        <span class="text-sm font-medium text-white">
                             Pendientes: <span id="total-pending-count">5</span>
                         </span>
                     </div>
-                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                         <i class="fas fa-sign-out-alt mr-2"></i>
-                        Salir
+                        Salir  
                     </button>
                 </div>
             </div>
@@ -100,76 +98,7 @@
             </div>
         </div>
 
-        <!-- Filtros Avanzados -->
-        <div class="bg-white shadow rounded-lg mb-6">
-            <div class="px-4 sm:px-6 py-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <i class="fas fa-filter mr-2"></i>Filtros
-                    </h3>
-                    <button onclick="toggleFilters()" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        <i class="fas fa-chevron-down mr-1" id="filter-chevron"></i>
-                        <span id="filter-toggle-text">Mostrar filtros</span>
-                    </button>
-                </div>
-                
-                <div id="filters-section" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <!-- Filtro por Email -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                <i class="fas fa-envelope mr-1"></i>Email Usuario
-                            </label>
-                            <input 
-                                type="text" 
-                                id="filter-email" 
-                                placeholder="usuario@ejemplo.com"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                oninput="applyFilters()"
-                            >
-                        </div>
-                        
-                        <!-- Filtro por Fecha -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                <i class="fas fa-calendar mr-1"></i>Fecha
-                            </label>
-                            <input 
-                                type="date" 
-                                id="filter-date"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                onchange="applyFilters()"
-                            >
-                        </div>
-                        
-                        <!-- Filtro por Venue -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                <i class="fas fa-map-marker-alt mr-1"></i>Venue
-                            </label>
-                            <input 
-                                type="text" 
-                                id="filter-venue"
-                                placeholder="Nombre del venue"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                oninput="applyFilters()"
-                            >
-                        </div>
-                        
-                        <!-- Botón de limpiar filtros -->
-                        <div class="flex items-end">
-                            <button 
-                                onclick="clearFilters()" 
-                                class="w-full px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                <i class="fas fa-times mr-1"></i>
-                                Limpiar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Filtros eliminados por solicitud del usuario -->
 
         <!-- Bulk Actions -->
         <div id="bulk-actions" class="bg-white shadow rounded-lg mb-6 p-4 hidden">
@@ -307,6 +236,7 @@
     <script>
         let currentFilter = 'approved';
         let currentEditItemId = null;
+        let currentPageData = []; // Para almacenar datos de la página actual (para función edit)
         
         // Variables para filtros y paginación
         let currentPage = 1;
@@ -341,12 +271,12 @@
                 
                 if (data.success) {
                     // Update unified navbar counters
-                    document.getElementById('count-approved').textContent = data.stats.approved;
-                    document.getElementById('count-rejected').textContent = data.stats.rejected;
+                    document.getElementById('count-approved').textContent = data.stats.approved_pending;
+                    document.getElementById('count-rejected').textContent = data.stats.rejected_pending;
                     document.getElementById('count-sent').textContent = data.stats.sent;
                     
-                    // Update total pending counter (approved + rejected)
-                    const totalPending = data.stats.approved + data.stats.rejected;
+                    // Update total pending counter (approved_pending + rejected_pending)
+                    const totalPending = data.stats.approved_pending + data.stats.rejected_pending;
                     document.getElementById('total-pending-count').textContent = totalPending;
                 }
             } catch (error) {
@@ -388,14 +318,13 @@
                             </p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            ${(item.status === 'approved' || item.status === 'rejected') ? `
+                            ${item.status === 'pending' ? `
                                 <input type="checkbox" class="item-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-item-id="${item.id}">
+                                <button onclick="editItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Editar
+                                </button>
                             ` : ''}
-                            
-                            <button onclick="editItem(${item.id})" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                <i class="fas fa-edit mr-1"></i>
-                                Editar
-                            </button>
                         </div>
                     </div>
                     
@@ -433,7 +362,7 @@
                                 ${item.created_at ? ` • ${new Date(item.created_at).toLocaleString()}` : ''}
                             </div>
                             <div class="flex space-x-2">
-                                ${item.status === 'approved' || item.status === 'rejected' ? `
+                                ${item.status === 'pending' && item.reviewed_at ? `
                                     <button onclick="markAsSent(${item.id})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                         <i class="fas fa-paper-plane mr-1"></i>
                                         Confirmar y Enviar MAIL
@@ -473,10 +402,12 @@
                 loading.classList.add('hidden');
                 
                 if (data.success && data.items.length > 0) {
+                    currentPageData = data.items; // Guardar datos para función edit
                     renderQueue(data.items);
                     updatePagination(data);
                     updateFilterResultsInfo(data);
                 } else {
+                    currentPageData = []; // No hay datos
                     emptyState.classList.remove('hidden');
                     hidePagination();
                 }
@@ -489,7 +420,22 @@
 
         function filterQueue(status) {
             currentFilter = status;
-            currentFilters = { status }; // Reiniciar filtros con solo el status
+            
+            // Configurar filtros según el tab seleccionado
+            if (status === 'approved') {
+                currentFilters = { 
+                    decision_type: 'approved',
+                    status: 'pending'
+                };
+            } else if (status === 'rejected') {
+                currentFilters = { 
+                    decision_type: 'rejected',
+                    status: 'pending'
+                };
+            } else if (status === 'sent') {
+                currentFilters = { status: 'sent' };
+            }
+            
             currentPage = 1;
             
             // Mostrar bulk actions en aprobados y rechazados
@@ -582,47 +528,7 @@
             return textMap[deliveryStatus] || deliveryStatus;
         }
 
-        function toggleFilters() {
-            const filtersSection = document.getElementById('filters-section');
-            const chevron = document.getElementById('filter-chevron');
-            const toggleText = document.getElementById('filter-toggle-text');
-            
-            if (filtersSection.classList.contains('hidden')) {
-                filtersSection.classList.remove('hidden');
-                chevron.classList.remove('fa-chevron-down');
-                chevron.classList.add('fa-chevron-up');
-                toggleText.textContent = 'Ocultar filtros';
-            } else {
-                filtersSection.classList.add('hidden');
-                chevron.classList.remove('fa-chevron-up');
-                chevron.classList.add('fa-chevron-down');
-                toggleText.textContent = 'Mostrar filtros';
-            }
-        }
-
-        function applyFilters() {
-            const email = document.getElementById('filter-email').value;
-            const date = document.getElementById('filter-date').value;
-            const venue = document.getElementById('filter-venue').value;
-            
-            currentFilters = { status: currentFilter };
-            if (email) currentFilters.email = email;
-            if (date) currentFilters.date = date;
-            if (venue) currentFilters.venue = venue;
-            
-            currentPage = 1;
-            loadQueueWithFilters();
-        }
-
-        function clearFilters() {
-            document.getElementById('filter-email').value = '';
-            document.getElementById('filter-date').value = '';
-            document.getElementById('filter-venue').value = '';
-            
-            currentFilters = { status: currentFilter };
-            currentPage = 1;
-            loadQueueWithFilters();
-        }
+        // Funciones de filtros eliminadas por solicitud del usuario
 
         function refreshQueue() {
             loadStats();
@@ -768,8 +674,107 @@
         // Funciones de aprobar/rechazar eliminadas - ya no hay elementos pendientes
 
         function editItem(itemId) {
-            // Implementar edición
-            console.log('Edit item:', itemId);
+            // Buscar el item en los datos actuales
+            const item = currentPageData.find(item => item.id === itemId);
+            if (!item) {
+                alert('Item no encontrado');
+                return;
+            }
+            
+            // Llenar el modal con los datos del item
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                        <p class="text-sm text-gray-900">${item.user_name} (${item.user_email})</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Show</label>
+                        <p class="text-sm text-gray-900">${item.show_description}</p>
+                    </div>
+                    <div>
+                        <label for="edit-email-subject" class="block text-sm font-medium text-gray-700 mb-2">Asunto del Email</label>
+                        <input type="text" id="edit-email-subject" value="${item.email_subject || ''}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="edit-email-content" class="block text-sm font-medium text-gray-700 mb-2">Contenido del Email</label>
+                        <textarea id="edit-email-content" rows="8" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">${item.email_content || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Decisión</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="decision_type" value="approved" ${item.decision_type === 'approved' ? 'checked' : ''} 
+                                       class="mr-2 text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-green-700">✅ Aprobado</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="decision_type" value="rejected" ${item.decision_type === 'rejected' ? 'checked' : ''} 
+                                       class="mr-2 text-red-600 focus:ring-red-500">
+                                <span class="text-sm text-red-700">❌ Rechazado</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="edit-supervisor-notes" class="block text-sm font-medium text-gray-700 mb-2">Notas del Supervisor</label>
+                        <textarea id="edit-supervisor-notes" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">${item.supervisor_notes || ''}</textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">
+                            Cancelar
+                        </button>
+                        <button onclick="saveEdit(${itemId})" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar el modal
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+        
+        async function saveEdit(itemId) {
+            const subject = document.getElementById('edit-email-subject').value.trim();
+            const content = document.getElementById('edit-email-content').value.trim();
+            const notes = document.getElementById('edit-supervisor-notes').value.trim();
+            const decisionType = document.querySelector('input[name="decision_type"]:checked').value;
+            
+            if (!subject || !content) {
+                alert('El asunto y contenido del email son obligatorios');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/queue/${itemId}/edit`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email_subject: subject,
+                        email_content: content,
+                        decision_type: decisionType,
+                        reviewer: 'Supervisor',
+                        notes: notes
+                    })
+                });
+                
+                if (response.ok) {
+                    closeEditModal();
+                    loadQueueWithFilters(); // Recargar la lista
+                    showNotification('Cambios guardados exitosamente', 'success');
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail || 'No se pudieron guardar los cambios'}`);
+                }
+            } catch (error) {
+                console.error('Error saving edit:', error);
+                alert('Error de conexión');
+            }
         }
 
         function toggleSelectAll() {
@@ -838,6 +843,36 @@
 
         function closeEditModal() {
             document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+
+
+        // 📢 Mostrar notificaciones
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-info-circle'
+                    } mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
         }
 
         // 🚪 Función de logout

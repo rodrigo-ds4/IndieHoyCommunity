@@ -52,6 +52,7 @@ class Show(Base):
     title = Column(String(200), nullable=False)
     artist = Column(String(100), nullable=False)
     venue = Column(String(100), nullable=False)
+    img = Column(String(500), nullable=True)  # Show image URL
     show_date = Column(DateTime, nullable=False)  # Show date
     
     # Discount control

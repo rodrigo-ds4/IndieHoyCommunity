@@ -32,21 +32,33 @@ async def search_shows(
              Show.venue.ilike(f"%{q}%"))
         ).limit(limit).all()
         
+        # URL por defecto para shows sin imagen específica
+        default_img = "https://indiehoy.com/wp-content/uploads/2024/05/comunidad-logo-blanco-1.png"
+        
         results = []
         for show in shows:
             remaining_discounts = show.get_remaining_discounts(db)
-            # Ya no filtramos aquí. Devolvemos todos los shows.
-            # El frontend decidirá si es seleccionable o no.
+            
+            # Determinar estado de descuentos (disponible/agotado)
+            discount_status = "Descuentos disponibles" if remaining_discounts > 0 else "Descuentos agotados"
+            
+            # Obtener ciudad y discount_type de other_data
+            city = show.other_data.get("city", "Ciudad TBD") if show.other_data else "Ciudad TBD"
+            discount_type = show.other_data.get("discount_type", "N/A") if show.other_data else "N/A"
+            
             results.append({
                 "id": show.id,
                 "title": show.title,
                 "artist": show.artist,
                 "venue": show.venue,
+                "img": show.img or default_img,  # Usar imagen por defecto si no hay específica
                 "show_date": show.show_date.strftime("%Y-%m-%d") if show.show_date else "Fecha TBD",
-                "price": show.other_data.get("price", 0) if show.other_data else 0,
                 "remaining_discounts": remaining_discounts,
+                "discount_status": discount_status,  # Nuevo: estado de descuentos
+                "city": city,  # Nuevo: ciudad
+                "discount_type": discount_type,  # Nuevo: tipo de descuento
                 "display_text": f"{show.title} - {show.artist} - {show.venue}",
-                "full_info": f"{show.title} por {show.artist} en {show.venue} - ${show.other_data.get('price', 'N/A')} ({remaining_discounts} descuentos disponibles)"
+                "simple_info": f"{city} - {show.title}/{show.artist} - {show.show_date.strftime('%Y-%m-%d') if show.show_date else 'Fecha TBD'} - {discount_type}"
             })
         
         return {
