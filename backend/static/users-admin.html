@@ -9,27 +9,25 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
+    <header class="shadow-sm border-b" style="background: linear-gradient(135deg, #5DADE2 0%, #85C1E9 100%);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center py-4 gap-4">
                 <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        👥 Administración de Usuarios
+                    <img src="https://indiehoy.com/wp-content/uploads/2024/09/logo-indiehoy-1.webp" alt="IndieHOY" class="h-8 w-auto mr-4">
+                    <h1 class="text-lg font-medium text-white">
+                        Usuarios
                     </h1>
-                    <span class="ml-3 px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                        IndieHOY
-                    </span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/supervision" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <div class="flex flex-wrap items-center gap-2 sm:space-x-4">
+                    <a href="/supervision" class="inline-flex items-center px-3 py-2 border border-white shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-transparent hover:bg-white hover:text-gray-700 transition-colors">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Volver a Descuentos
                     </a>
-                    <button onclick="refresh()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <button onclick="refresh()" class="inline-flex items-center px-3 py-2 border border-white shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-transparent hover:bg-white hover:text-gray-700 transition-colors">
                         <i class="fas fa-sync-alt mr-2"></i>
                         Actualizar
                     </button>
-                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    <button onclick="logout()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                         <i class="fas fa-sign-out-alt mr-2"></i>
                         Salir
                     </button>
@@ -41,7 +39,7 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div class="bg-white overflow-hidden shadow rounded-lg">
                 <div class="p-5">
                     <div class="flex items-center">
@@ -273,7 +271,7 @@
             
             container.innerHTML = users.map(user => `
                 <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div class="flex-1">
                             <div class="flex items-center space-x-4">
                                 <div class="flex-shrink-0">
@@ -295,7 +293,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
                             <!-- Estado de Pago -->
                             <div class="text-center">
                                 <div class="mb-1">
@@ -305,6 +303,22 @@
                                     }
                                 </div>
                                 <p class="text-xs text-gray-500">Estado de Pago</p>
+                            </div>
+                            
+                            <!-- 💳 INFO DE PAGOS -->
+                            <div class="text-center sm:border-l border-gray-200 sm:pl-4">
+                                <div class="mb-1">
+                                    <div class="text-sm font-medium text-gray-900">${user.total_payments || 0}</div>
+                                    <div class="text-xs text-gray-500">Pagos confirmados</div>
+                                </div>
+                                ${user.last_payment_date 
+                                    ? '<div class="text-xs text-gray-600 mt-1"><i class="fas fa-calendar mr-1"></i>' + new Date(user.last_payment_date).toLocaleDateString() + '</div>'
+                                    : '<div class="text-xs text-gray-400">Sin pagos</div>'
+                                }
+                                ${user.last_payment_amount && user.last_payment_amount > 0
+                                    ? '<div class="text-xs text-green-600 font-medium">$' + user.last_payment_amount.toFixed(2) + '</div>'
+                                    : ''
+                                }
                             </div>
                             
                             <!-- Botón de Acción -->

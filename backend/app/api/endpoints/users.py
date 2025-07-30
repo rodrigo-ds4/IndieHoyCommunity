@@ -290,11 +290,17 @@ class UserListItem(BaseModel):
     email: str
     city: Optional[str]
     phone: Optional[str]
-    dni: Optional[str]
+    dni: Optional[int]  # 🔧 Corregido: debe ser int como en la DB
     registration_date: datetime
     subscription_active: bool
     monthly_fee_current: bool
     created_at: datetime
+    
+    # 💳 Información de pagos
+    last_payment_date: Optional[datetime] = None
+    last_payment_amount: Optional[float] = None
+    total_payments: int = 0
+    payment_method: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -370,21 +376,40 @@ async def list_users(
             "has_prev": page > 1
         }
         
-        # Convertir usuarios a formato compatible
+        # 💳 CONVERTIR USUARIOS CON INFORMACIÓN DE PAGOS
+        from app.models.database import PaymentHistory
         user_items = []
+        
         for user in users:
+            # Obtener historial de pagos del usuario
+            payments = db.query(PaymentHistory).filter(
+                PaymentHistory.user_id == user.id,
+                PaymentHistory.confirmed == True  # Solo pagos confirmados
+            ).order_by(PaymentHistory.payment_date.desc()).all()
+            
             user_dict = {
                 "id": user.id,
                 "name": user.name,
                 "email": user.email,
                 "city": user.city,
                 "phone": user.phone,
-                "dni": str(user.dni) if user.dni else None,  # Convertir a string
+                "dni": user.dni,  # 🔧 Ya arreglado: mantener como int
                 "registration_date": user.registration_date,
                 "subscription_active": user.subscription_active,
                 "monthly_fee_current": user.monthly_fee_current,
-                "created_at": user.created_at
+                "created_at": user.created_at,
+                "total_payments": len(payments)
             }
+            
+            # Agregar info del último pago si existe
+            if payments:
+                last_payment = payments[0]  # Ya está ordenado por fecha desc
+                user_dict.update({
+                    "last_payment_date": last_payment.payment_date,
+                    "last_payment_amount": last_payment.amount_paid,
+                    "payment_method": last_payment.payment_method
+                })
+            
             user_items.append(UserListItem(**user_dict))
         
         return UserListResponse(
@@ -418,6 +443,20 @@ async def update_payment_status(
         old_status = user.monthly_fee_current
         user.monthly_fee_current = update_data.monthly_fee_current
         user.updated_at = datetime.now()
+        
+        # 📋 CREAR REGISTRO EN PAYMENT_HISTORY si hay un cambio real
+        if old_status != update_data.monthly_fee_current:
+            from app.models.database import PaymentHistory
+            
+            payment_record = PaymentHistory(
+                user_id=user.id,
+                amount_paid=0.0,  # Será actualizado cuando se integre con MercadoPago
+                payment_date=datetime.now(),
+                payment_method="admin_update",  # Método especial para cambios manuales
+                description=f"Estado cambiado manualmente: {'al día' if update_data.monthly_fee_current else 'pendiente'}",
+                confirmed=update_data.monthly_fee_current  # True si al día, False si pendiente
+            )
+            db.add(payment_record)
         
         db.commit()
         db.refresh(user)

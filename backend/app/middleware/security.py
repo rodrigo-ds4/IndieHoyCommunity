@@ -6,6 +6,11 @@ import re
 PROTECTED_ENDPOINTS = [
     r'^/api/v1/supervision.*',
     r'^/api/v1/admin.*',
+    r'^/api/v1/users/list$',           # 👥 Lista de usuarios (admin)
+    r'^/api/v1/users/stats$',          # 📊 Estadísticas de usuarios (admin)
+    r'^/api/v1/users/\d+/payment-status$',  # 💳 Cambiar estado de pago (admin)
+    r'^/static/supervision\.html$',    # 🎛️ Dashboard de supervisión (admin)
+    r'^/static/users-admin\.html$',    # 👥 Admin de usuarios (admin)
     r'^/docs.*',
     r'^/redoc.*',
     r'^/openapi\.json$'
@@ -16,8 +21,16 @@ PUBLIC_ENDPOINTS = [
     r'^/api/v1/auth/login$',
     r'^/api/v1/auth/verify$',
     r'^/api/v1/health.*',
+    r'^/api/v1/users/validate-email$',     # ✉️ Validación de email (público)
+    r'^/api/v1/users/check-email$',        # ✉️ Verificar email existe (público)
+    r'^/api/v1/users/register$',           # 📝 Registro de usuarios (público)  
+    r'^/api/v1/shows/search$',             # 🔍 Búsqueda de shows (público)
+    r'^/api/v1/shows/available$',          # 📋 Shows disponibles (público)
+    r'^/api/v1/discounts/request$',        # 🎫 Solicitar descuento (público)
+    r'^/api/v1/discounts/health$',         # 🏥 Health check discounts (público)
     r'^/static/login\.html$',
     r'^/static/request-discount\.html$',
+    r'^/static/register\.html$',
     r'^/$',
     r'^/favicon\.ico$'
 ]
