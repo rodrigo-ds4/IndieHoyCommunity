@@ -1,23 +1,25 @@
-# IndieHOY Discount System 🎫
+# IndieHOY Community Platform 🎵
 
-A simple and reliable system for requesting show discounts – deterministic, fast, and ready for production.
+A complete community management system for IndieHOY - managing user subscriptions, discount requests, and member benefits with modern web technologies.
 
 ---
 
-## Objective
+## Overview
 
-A complete solution that allows users to request discounts for shows through:
+**IndieHoyCommunity** is a comprehensive platform that enables IndieHOY to manage their music community through:
 
--   A modern landing page with real-time show search
--   Email pre-validation to ensure only eligible users can request discounts
--   A human supervision dashboard for reviewing, editing, and approving requests
--   Ultra-fast, deterministic processing (less than 1 second per request)
+-   **User Registration & Management** - Complete member onboarding with payment integration
+-   **Subscription System** - Monthly membership with MercadoPago integration  
+-   **Discount Request System** - Real-time show search and discount request processing
+-   **Admin Dashboard** - Human supervision for approvals, user management, and analytics
+-   **Responsive Design** - Mobile-first approach with modern UI/UX
 
-**Current Status:** Fully functional and production-ready
+**Current Status:** Production-ready with full payment integration
 
-Second Phase:
--    Community chatbot based on LLama though OLLama
--    RAG using LangChain
+**Future Phases:**
+-    Community chatbot powered by LLama via OLLama
+-    Advanced analytics and member insights
+-    Event management and booking system
 ---
 
 ## System Overview
@@ -214,20 +216,28 @@ flowchart TD
 ## Setup
 
 ```bash
-git clone <repo-url>
-cd backend
-docker build -t charro-backend .
-docker run -d -p 8000:8000 --name charro-backend charro-backend
+git clone https://github.com/rodrigo-ds4/IndieHoyCommunity.git
+cd IndieHoyCommunity/backend
+docker build -t indiehoy-community .
+docker run -d -p 8000:8000 --name indiehoy-community indiehoy-community
 ```
 
--   Landing Page: http://localhost:8000/request
--   Admin Dashboard: http://localhost:8000/supervision
--   API Docs: http://localhost:8000/docs
--   Health Check: http://localhost:8000/health
+### Access URLs
+-   **Member Registration:** http://localhost:8000/register
+-   **Discount Requests:** http://localhost:8000/request  
+-   **Admin Dashboard:** http://localhost:8000/supervision
+-   **User Management:** http://localhost:8000/users-admin
+-   **API Documentation:** http://localhost:8000/docs
+-   **Health Check:** http://localhost:8000/health
+
+### Admin Credentials
+- Username: `admin`
+- Password: `admin123`
 
 ---
 
 ## Roadmap
 
--   **Phase 1 (Current):** Deterministic, rule-based discount system with human supervision and modern frontend.
--   **Phase 2 (Planned):** Integration of a community chatbot as a microservice for conversational discount requests.
+-   **Phase 1 (Current):** Complete community management platform with subscription system and discount management.
+-   **Phase 2 (In Progress):** MercadoPago payment integration for automated subscriptions.
+-   **Phase 3 (Planned):** Community chatbot powered by LLama via OLLama for automated member support.
