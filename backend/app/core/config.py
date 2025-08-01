@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     """
     
     # === APPLICATION ===
-    APP_NAME: str = "Charro Bot API"
-    VERSION: str = "1.0.0"
+    APP_NAME: str = "IndieHOY Community API"
+    VERSION: str = "2.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     

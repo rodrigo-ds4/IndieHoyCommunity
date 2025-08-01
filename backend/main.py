@@ -21,10 +21,12 @@ async def lifespan(app: FastAPI):
     Replaces @app.on_event("startup") / @app.on_event("shutdown")
     """
     # Startup logic
-    print("🚀 Starting Charro Bot Backend...")
+    print("🎵 Starting IndieHOY Community Platform...")
+    print("=" * 50)
     print(f"🔧 Environment: {settings.ENVIRONMENT}")
     print(f"🐳 Ollama URL: {settings.OLLAMA_URL}")
     print(f"🗄️ Database URL: {settings.DATABASE_URL}")
+    print("=" * 50)
     
     # Create database tables and populate if needed
     try:
@@ -55,7 +57,7 @@ async def lifespan(app: FastAPI):
     yield  # Application runs here
     
     # Shutdown logic
-    print("👋 Shutting down Charro Bot Backend...")
+    print("👋 Shutting down IndieHOY Community Platform...")
 
 
 # FastAPI application instance
@@ -64,9 +66,9 @@ docs_url = "/docs" if settings.ENVIRONMENT == "development" else None
 redoc_url = "/redoc" if settings.ENVIRONMENT == "development" else None
 
 app = FastAPI(
-    title="Charro Bot API",
-    description="Chatbot + Decision Agent for Show Discounts",
-    version="1.0.0",
+    title=settings.APP_NAME,
+    description="🎵 Complete community management platform for IndieHOY - User subscriptions, discount requests, and member benefits",
+    version=settings.VERSION,
     docs_url=docs_url,  # Solo en desarrollo
     redoc_url=redoc_url,  # Solo en desarrollo
     lifespan=lifespan
